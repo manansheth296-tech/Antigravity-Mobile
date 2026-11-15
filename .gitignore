@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+.antigravity_config.json
+
+# Temporary packages
+*.zip
+*.log
+
+# Android build outputs
+android/.gradle/
+android/app/build/
+android/build/
+local.properties
+.idea/
+*.iml

@@ -1,0 +1,18 @@
+{
+  "name": "Antigravity Mobile",
+  "short_name": "Antigravity",
+  "description": "Agentic AI IDE & Coding Companion for Android",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0d11",
+  "theme_color": "#0b0d11",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%234285f4'/><stop offset='50%' stop-color='%239b72cf'/><stop offset='100%' stop-color='%23d96570'/></linearGradient></defs><rect width='100' height='100' rx='24' fill='%2312151e'/><path d='M50 20 L80 80 L50 65 L20 80 Z' fill='url(%23g)'/></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
