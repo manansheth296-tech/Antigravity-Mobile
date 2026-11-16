@@ -121,7 +121,7 @@ TOOL_DECLARATIONS = [
 
 
 class PureGeminiAgent:
-    def __init__(self, workspace_dir: str, api_key: Optional[str] = None, model_name: str = "gemini-3.8-flash"):
+    def __init__(self, workspace_dir: str, api_key: Optional[str] = None, model_name: str = "gemini-3.5-flash-lite"):
         self.workspace_dir = workspace_dir
         self.tools = ToolRegistry(workspace_dir)
         self.api_key = (api_key or os.getenv("GEMINI_API_KEY", "")).strip()

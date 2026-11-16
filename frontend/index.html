@@ -3,21 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0b0d11">
+  <meta name="theme-color" content="#0a0c10">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Antigravity Mobile</title>
-  <link rel="manifest" href="/static/manifest.json">
-  <link rel="stylesheet" href="/static/style.css">
-  <!-- Markdown parser -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <title>Antigravity Mobile IDE</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="prism-tomorrow.min.css">
+  <!-- Bundled local markdown parser and syntax highlighter (zero-network dependency) -->
+  <script src="marked.min.js"></script>
+  <script src="prism.min.js"></script>
+  <script src="prism-python.min.js"></script>
+  <script src="prism-bash.min.js"></script>
+  <script src="prism-json.min.js"></script>
 </head>
 <body>
   <div class="app-container">
     <!-- Header -->
     <header class="app-header">
       <div class="header-left">
-        <button id="btn-toggle-files" class="icon-btn" title="Files">
+        <button id="btn-toggle-files" class="icon-btn" title="Workspace Explorer">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
           </svg>
@@ -25,16 +30,29 @@
         <div class="brand">
           <span class="logo-gemini">✦</span>
           <span class="logo-text">Antigravity</span>
-          <span class="badge-mobile">MOBILE</span>
+          <span class="badge-mobile">IDE</span>
         </div>
       </div>
       <div class="header-right">
+        <button id="btn-open-preview" class="icon-btn preview-header-btn" title="Live Preview Runner">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+        </button>
+        <button id="btn-open-templates" class="icon-btn" title="Project Templates">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+          </svg>
+        </button>
         <div id="status-pill" class="status-indicator">
           <span class="status-dot"></span>
-          <span id="model-label">3.8 Flash</span>
+          <span id="model-label">3.5 Lite</span>
         </div>
         <button id="btn-settings" class="icon-btn" title="Settings">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="3"/>
             <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
           </svg>
@@ -42,14 +60,30 @@
       </div>
     </header>
 
-    <!-- Side File Drawer -->
+    <!-- Side File Drawer / Workspace Explorer -->
     <div id="file-drawer" class="file-drawer">
       <div class="drawer-header">
-        <h3>Workspace Explorer</h3>
+        <div class="drawer-title-group">
+          <h3>Workspace Explorer</h3>
+          <span id="workspace-file-count" class="badge-count">0 files</span>
+        </div>
         <button id="btn-close-drawer" class="icon-btn">&times;</button>
+      </div>
+      <div class="drawer-toolbar">
+        <button id="btn-new-file" class="action-btn-sm">+ New File</button>
+        <button id="btn-import-file" class="action-btn-sm">📥 Import</button>
+        <button id="btn-export-workspace" class="action-btn-sm">💾 Export</button>
+        <input type="file" id="input-file-import" style="display:none" multiple>
+      </div>
+      <div class="drawer-search">
+        <input type="text" id="workspace-search-input" placeholder="Search workspace files...">
       </div>
       <div id="file-list" class="file-list">
         <p class="empty-state">Loading workspace files...</p>
+      </div>
+      <div class="drawer-footer">
+        <button id="btn-drawer-templates" class="secondary-btn-sm">⚡ Load Starter Project</button>
+        <button id="btn-reset-workspace" class="danger-btn-sm" title="Reset workspace to default demo project">Reset</button>
       </div>
     </div>
     <div id="drawer-overlay" class="drawer-overlay"></div>
@@ -58,12 +92,13 @@
     <main id="chat-messages" class="chat-feed">
       <div class="welcome-card">
         <div class="welcome-icon">✦</div>
-        <h2>Antigravity Mobile</h2>
-        <p>Your agentic AI software companion on Android. Build, run commands, edit code, and sync to GitHub anywhere.</p>
+        <h2>Antigravity Mobile IDE</h2>
+        <p>Your agentic AI software engineering IDE on Android. Write code, preview web apps live, edit with mobile-friendly symbol keys, and scaffold full projects on the go.</p>
         <div class="quick-chips">
-          <button class="chip" onclick="sendQuickPrompt('Check device status and workspace')">📱 Device Status</button>
-          <button class="chip" onclick="sendQuickPrompt('List files in the workspace and git status')">📂 Git Status</button>
-          <button class="chip" onclick="sendQuickPrompt('Create a simple demo web app with HTML, CSS, and JS')">🚀 Create Web App</button>
+          <button class="chip" onclick="openLivePreview()">▶ Run Live Web Preview</button>
+          <button class="chip" onclick="openTemplatesModal()">⚡ Starter Templates</button>
+          <button class="chip" onclick="openEditorWithCurrentFile('index.html')">✏️ Open Code Editor</button>
+          <button class="chip" onclick="sendQuickPrompt('Explain the architecture of the current workspace project')">🔍 Explain Project</button>
         </div>
       </div>
     </main>
@@ -72,6 +107,19 @@
     <div id="live-activity-pill" class="activity-pill hidden">
       <span class="spinner"></span>
       <span id="activity-text">Thinking...</span>
+    </div>
+
+    <!-- Quick Action Ribbon (Collapsible Developer Shortcuts) -->
+    <div class="quick-action-ribbon">
+      <div class="quick-chips-scroll">
+        <button class="quick-action-chip" onclick="handleQuickAction('explain')">⚡ Explain Code</button>
+        <button class="quick-action-chip" onclick="handleQuickAction('tests')">🧪 Generate Tests</button>
+        <button class="quick-action-chip" onclick="handleQuickAction('bugs')">🐞 Find Bugs</button>
+        <button class="quick-action-chip" onclick="handleQuickAction('refactor')">🛠️ Refactor</button>
+        <button class="quick-action-chip" onclick="openLivePreview()">▶ Live Preview</button>
+        <button class="quick-action-chip" onclick="openTemplatesModal()">📂 Templates</button>
+        <button class="quick-action-chip" onclick="handleQuickAction('termux')">📱 Termux API</button>
+      </div>
     </div>
 
     <!-- Bottom Input Bar -->
@@ -85,7 +133,7 @@
             <line x1="8" y1="23" x2="16" y2="23"/>
           </svg>
         </button>
-        <textarea id="prompt-input" rows="1" placeholder="Ask Antigravity to code, build, test..."></textarea>
+        <textarea id="prompt-input" rows="1" placeholder="Ask Antigravity to code, build, test, refactor..."></textarea>
         <button id="btn-send" class="send-btn" title="Send">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="22" y1="2" x2="11" y2="13"/>
@@ -94,6 +142,247 @@
         </button>
       </div>
     </footer>
+
+    <!-- Full-Featured Mobile Code Editor Modal -->
+    <div id="editor-modal" class="fullscreen-modal hidden">
+      <div class="editor-header">
+        <div class="editor-title-bar">
+          <button id="btn-close-editor" class="icon-btn" title="Back">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </button>
+          <div class="editor-file-info">
+            <span id="editor-filename" class="editor-filename">index.html</span>
+            <span id="editor-dirty-indicator" class="dirty-dot hidden">●</span>
+          </div>
+        </div>
+        <div class="editor-actions">
+          <button id="btn-editor-search-toggle" class="editor-btn icon-only" title="Find in Code">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
+          <button id="btn-editor-preview" class="editor-btn preview-btn" title="Run / Preview">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            <span>Run</span>
+          </button>
+          <button id="btn-editor-ask-ai" class="editor-btn ai-btn" title="Ask Antigravity about this file">
+            <span class="sparkle">✦</span>
+            <span>Ask AI</span>
+          </button>
+          <button id="btn-editor-save" class="editor-btn save-btn" title="Save File">Save</button>
+        </div>
+      </div>
+
+      <!-- Editor Search / Replace Bar -->
+      <div id="editor-search-bar" class="editor-search-bar hidden">
+        <input type="text" id="editor-search-query" placeholder="Find in file...">
+        <span id="editor-search-match-count">0/0</span>
+        <button id="btn-search-prev" class="search-btn">▲</button>
+        <button id="btn-search-next" class="search-btn">▼</button>
+        <button id="btn-search-close" class="search-btn">&times;</button>
+      </div>
+
+      <!-- Editor Body: Line numbers + Code input -->
+      <div class="editor-body">
+        <div id="editor-line-numbers" class="editor-line-numbers">1</div>
+        <textarea id="editor-textarea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+      </div>
+
+      <!-- Mobile Touch Coding Symbols Ribbon -->
+      <div class="mobile-symbols-ribbon">
+        <button class="symbol-key" data-insert="  ">Tab</button>
+        <button class="symbol-key" data-insert="{">{</button>
+        <button class="symbol-key" data-insert="}">}</button>
+        <button class="symbol-key" data-insert="(">(</button>
+        <button class="symbol-key" data-insert=")">)</button>
+        <button class="symbol-key" data-insert="[">[</button>
+        <button class="symbol-key" data-insert="]">]</button>
+        <button class="symbol-key" data-insert='"' data-pair='""'>"</button>
+        <button class="symbol-key" data-insert="'" data-pair="''">'</button>
+        <button class="symbol-key" data-insert="=">=</button>
+        <button class="symbol-key" data-insert=";">;</button>
+        <button class="symbol-key" data-insert=":">:</button>
+        <button class="symbol-key" data-insert="&gt;">&gt;</button>
+        <button class="symbol-key" data-insert="&lt;">&lt;</button>
+        <button class="symbol-key" data-insert="/">/</button>
+        <button class="symbol-key" data-insert="\">\</button>
+        <button class="symbol-key" data-insert="!">!</button>
+        <button class="symbol-key" data-insert="$">$</button>
+        <button class="symbol-key" data-insert="#">#</button>
+        <button class="symbol-key" data-insert="_">_</button>
+      </div>
+    </div>
+
+    <!-- Interactive Live Sandbox / Preview Runner -->
+    <div id="preview-modal" class="fullscreen-modal hidden">
+      <div class="preview-header">
+        <div class="preview-title-group">
+          <span class="preview-icon">▶</span>
+          <span class="preview-title">Live Mobile Sandbox</span>
+          <span id="preview-badge" class="badge-tag">HTML5 / Canvas / JS</span>
+        </div>
+        <div class="preview-actions">
+          <button id="btn-preview-refresh" class="icon-btn" title="Refresh">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+            </svg>
+          </button>
+          <button id="btn-toggle-console" class="preview-pill-btn" title="Toggle Console">
+            <span>Console</span>
+            <span id="console-badge" class="count-badge">0</span>
+          </button>
+          <button id="btn-close-preview" class="icon-btn">&times;</button>
+        </div>
+      </div>
+
+      <div class="preview-container">
+        <div id="preview-frame-wrapper" class="preview-frame-wrapper">
+          <iframe id="preview-iframe" sandbox="allow-scripts allow-modals allow-pointer-lock allow-forms"></iframe>
+        </div>
+      </div>
+
+      <!-- Slide-Up Virtual DevTools Console -->
+      <div id="preview-console-drawer" class="preview-console-drawer collapsed">
+        <div class="console-drawer-header">
+          <span class="console-title">DevTools Console Output</span>
+          <div class="console-tools">
+            <button id="btn-clear-console" class="action-btn-xs">Clear</button>
+            <button id="btn-minimize-console" class="action-btn-xs">▼</button>
+          </div>
+        </div>
+        <div id="preview-console-logs" class="console-logs-list">
+          <div class="console-line system">[System] Sandbox initialized. Ready to execute code.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project Templates Modal -->
+    <div id="templates-modal" class="modal hidden">
+      <div class="modal-content templates-content">
+        <div class="modal-header">
+          <h3>⚡ Starter Project Templates</h3>
+          <button id="btn-close-templates" class="icon-btn">&times;</button>
+        </div>
+        <div class="modal-body templates-grid">
+          <!-- Card 1 -->
+          <div class="template-card" onclick="loadTemplate('canvas_game')">
+            <div class="template-icon">🎮</div>
+            <div class="template-info">
+              <h4>Neon Arcade Touch Game</h4>
+              <p>60fps HTML5 Canvas physics arcade game with virtual touch controls & particle explosions.</p>
+              <div class="template-tags">
+                <span class="tag">HTML5</span>
+                <span class="tag">Canvas</span>
+                <span class="tag">Touch</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="template-card" onclick="loadTemplate('mobile_notes')">
+            <div class="template-icon">📱</div>
+            <div class="template-info">
+              <h4>Obsidian Mobile Notes PWA</h4>
+              <p>Touch-optimized task and markdown notes organizer with offline localStorage persistence.</p>
+              <div class="template-tags">
+                <span class="tag">CSS3</span>
+                <span class="tag">PWA</span>
+                <span class="tag">LocalStorage</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="template-card" onclick="loadTemplate('canvas_chart')">
+            <div class="template-icon">📊</div>
+            <div class="template-info">
+              <h4>Real-time Telemetry Dashboard</h4>
+              <p>Interactive canvas telemetry chart simulating live sensor data streams and metrics.</p>
+              <div class="template-tags">
+                <span class="tag">Canvas</span>
+                <span class="tag">Metrics</span>
+                <span class="tag">Dashboard</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="template-card" onclick="loadTemplate('termux_agent')">
+            <div class="template-icon">🐍</div>
+            <div class="template-info">
+              <h4>Termux Hardware Telemetry Script</h4>
+              <p>Pure Python script reading Android battery, wifi status, sensors & vibration via Termux API.</p>
+              <div class="template-tags">
+                <span class="tag">Python</span>
+                <span class="tag">Termux</span>
+                <span class="tag">Android API</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 5 -->
+          <div class="template-card" onclick="loadTemplate('fastapi_service')">
+            <div class="template-icon">⚡</div>
+            <div class="template-info">
+              <h4>FastAPI Microservice Boilerplate</h4>
+              <p>Lightweight Python REST API with health check, endpoints, and CORS middleware.</p>
+              <div class="template-tags">
+                <span class="tag">Python</span>
+                <span class="tag">FastAPI</span>
+                <span class="tag">REST</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI File Action Sheet Modal -->
+    <div id="ai-action-sheet" class="modal hidden">
+      <div class="modal-content ai-sheet-content">
+        <div class="modal-header">
+          <h3>✦ Ask Antigravity about File</h3>
+          <button id="btn-close-ai-sheet" class="icon-btn">&times;</button>
+        </div>
+        <div class="modal-body ai-options-list">
+          <button class="ai-option-btn" onclick="executeAiFileAction('explain')">
+            <span class="opt-icon">📖</span>
+            <div class="opt-text">
+              <strong>Explain Code</strong>
+              <small>Break down functions, logic, and architecture</small>
+            </div>
+          </button>
+          <button class="ai-option-btn" onclick="executeAiFileAction('bugs')">
+            <span class="opt-icon">🐞</span>
+            <div class="opt-text">
+              <strong>Find Bugs & Vulnerabilities</strong>
+              <small>Audit for edge cases, null pointers, and security risks</small>
+            </div>
+          </button>
+          <button class="ai-option-btn" onclick="executeAiFileAction('tests')">
+            <span class="opt-icon">🧪</span>
+            <div class="opt-text">
+              <strong>Generate Unit Tests</strong>
+              <small>Produce comprehensive test cases and mocks</small>
+            </div>
+          </button>
+          <button class="ai-option-btn" onclick="executeAiFileAction('refactor')">
+            <span class="opt-icon">🛠️</span>
+            <div class="opt-text">
+              <strong>Refactor & Optimize</strong>
+              <small>Clean structure, improve readability, boost performance</small>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Settings Modal -->
     <div id="settings-modal" class="modal hidden">
@@ -109,33 +398,20 @@
 
           <label>Model</label>
           <select id="select-model">
-            <option value="gemini-3.8-flash">Gemini 3.8 Flash (Latest, Fast)</option>
-            <option value="gemini-3.8-pro">Gemini 3.8 Pro (Deep Reasoning)</option>
-            <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+            <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite (Recommended, 2s)</option>
+            <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+            <option value="gemini-3.8-flash">Gemini 3.8 Flash (Thinking)</option>
           </select>
 
           <label>Workspace Path</label>
           <input type="text" id="input-workspace" placeholder="/data/data/com.termux/files/home/workspace">
-          
-          <button id="btn-save-settings" class="primary-btn">Save Settings</button>
-        </div>
-      </div>
-    </div>
 
-    <!-- Code Viewer Modal -->
-    <div id="file-viewer-modal" class="modal hidden">
-      <div class="modal-content file-viewer-content">
-        <div class="modal-header">
-          <h3 id="viewer-filename">File</h3>
-          <button id="btn-close-viewer" class="icon-btn">&times;</button>
-        </div>
-        <div class="modal-body">
-          <pre id="viewer-code"></pre>
+          <button id="btn-save-settings" class="primary-btn">Save Settings</button>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="/static/app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

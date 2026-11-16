@@ -17,3 +17,5 @@ android/build/
 local.properties
 .idea/
 *.iml
+*.apk
+phone_*.png

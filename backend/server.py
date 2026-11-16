@@ -20,7 +20,7 @@ CONFIG_FILE = Path(WORKSPACE_DIR) / ".antigravity_config.json"
 
 # Load saved API key / config if exists
 initial_key = os.getenv("GEMINI_API_KEY", "")
-initial_model = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+initial_model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
 if CONFIG_FILE.exists():
     try:
