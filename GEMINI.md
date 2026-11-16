@@ -25,10 +25,12 @@ Antigravity Mobile is a mobile-first agentic AI IDE and companion application fo
   - **Developer Quick-Action Chips:** Horizontal ribbon above the input bar for instant prompts (⚡ Explain Code, 🧪 Generate Tests, 🐞 Find Bugs, 🛠️ Refactor, ▶ Live Preview, 📂 Templates, 📱 Termux API).
 - **Automated Cloud Compilation:** GitHub Actions workflow (`.github/workflows/build-apk.yml`) automatically compiles and releases APKs upon push.
 
-### Mode 2: Termux Linux Agent Environment (Full Terminal Shell Engine) — [NEXT UP: OPTION 1]
+### Mode 2: Termux Linux Agent Environment (Full Terminal Shell Engine) — [ACTIVE & INTEGRATED]
 - **Engine:** Pure Python multithreaded server (`run.py`, `backend/server.py`, `backend/gemini_client.py`).
-- **Capabilities:** Direct bash tool calling, file reader/writer/patcher, git checkpoints, Termux API hardware status.
+- **Capabilities:** Direct bash tool calling (`run_shell`), file reader/writer/patcher (`read_file`, `write_file`, `patch_file`), git safety checkpoints (`git_checkpoint`), Termux API hardware status (`get_device_status`).
+- **Hybrid Dual-Engine Architecture:** Auto-detects local Termux agent on `http://localhost:8000`. When active, streams tool call execution cards directly into chat and reads/writes real Android disk files; when offline, seamlessly falls back to Standalone Mode.
 - **Requirements:** 100% standard library (zero C/Rust compiled packages, fully compatible with 32-bit ARM Android).
+- **Scripts:** `termux_setup.sh` (1-command installer) and `start_termux.sh` (background daemon launcher).
 
 ### Mode 3: Desktop Hub & Context Bridge (Phase 2)
 - Main PC workstation serves as the central heavy-compute and repository hub.

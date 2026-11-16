@@ -392,6 +392,20 @@
           <button id="btn-close-settings" class="icon-btn">&times;</button>
         </div>
         <div class="modal-body">
+          <label>Execution Engine</label>
+          <select id="select-engine-mode">
+            <option value="auto">⚡ Auto-Detect Termux (Recommended)</option>
+            <option value="termux">🐧 Termux Linux Agent (Full Shell & Real Files)</option>
+            <option value="standalone">📱 Standalone Mobile (Direct Gemini API)</option>
+          </select>
+
+          <label>Termux Server URL</label>
+          <div style="display:flex; gap:6px;">
+            <input type="text" id="input-server-url" value="http://localhost:8000" placeholder="http://localhost:8000" style="flex:1">
+            <button type="button" id="btn-test-connection" class="action-btn-sm" style="white-space:nowrap">Test Ping</button>
+          </div>
+          <small id="connection-status-hint">Auto-connects to Termux Linux engine on localhost:8000</small>
+
           <label>Gemini API Key</label>
           <input type="password" id="input-api-key" placeholder="AIzaSy...">
           <small>Get a free key from Google AI Studio (aistudio.google.com)</small>

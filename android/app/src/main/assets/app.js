@@ -1,6 +1,8 @@
-// Antigravity Mobile IDE - Complete Standalone Agentic Engine
-// Supports On-Device Virtual Workspace, Prism Syntax Highlighting,
-// Live Mobile Web Sandbox Runner, Touch Coding Symbols, and Gemini 3.5 API.
+// Antigravity Mobile IDE - Hybrid Dual-Engine Client
+// Supports:
+// 1. Termux Linux Agent Engine (Server-Sent Events streaming, direct bash execution, real filesystem tools)
+// 2. Standalone On-Device Engine (Direct Gemini 3.5 Flash Lite REST API + Virtual Workspace)
+// 3. Auto-Detection with zero-latency fallback between Termux and Standalone mode
 
 // --- Global State ---
 let currentAgentMessageEl = null;
@@ -16,6 +18,11 @@ let consoleLogCount = 0;
 let searchMatches = [];
 let currentSearchMatchIndex = -1;
 
+// Engine State
+let isTermuxConnected = false;
+let termuxWorkspacePath = "";
+let serverCheckTimer = null;
+
 // --- DOM References ---
 const chatMessages = document.getElementById("chat-messages");
 const promptInput = document.getElementById("prompt-input");
@@ -25,6 +32,7 @@ const activityPill = document.getElementById("live-activity-pill");
 const activityText = document.getElementById("activity-text");
 const modelLabel = document.getElementById("model-label");
 const statusDot = document.querySelector(".status-dot");
+const statusPill = document.getElementById("status-pill");
 
 // Drawer & Workspace Explorer
 const btnToggleFiles = document.getElementById("btn-toggle-files");
@@ -87,9 +95,185 @@ const btnSaveSettings = document.getElementById("btn-save-settings");
 const inputApiKey = document.getElementById("input-api-key");
 const selectModel = document.getElementById("select-model");
 const inputWorkspace = document.getElementById("input-workspace");
+const selectEngineMode = document.getElementById("select-engine-mode");
+const inputServerUrl = document.getElementById("input-server-url");
+const btnTestConnection = document.getElementById("btn-test-connection");
+const connectionStatusHint = document.getElementById("connection-status-hint");
 
 // ==========================================
-// 1. STARTER TEMPLATES & DEFAULT CODE
+// 1. SETTINGS & ENGINE CONFIGURATION
+// ==========================================
+function getApiKey() {
+  return localStorage.getItem("antigravity_api_key") || "";
+}
+
+function getSelectedModel() {
+  return localStorage.getItem("antigravity_model") || "gemini-3.5-flash-lite";
+}
+
+function getEngineMode() {
+  return localStorage.getItem("antigravity_engine_mode") || "auto";
+}
+
+function getServerUrl() {
+  const url = localStorage.getItem("antigravity_server_url") || "http://localhost:8000";
+  return url.replace(/\/+$/, "");
+}
+
+function initSettings() {
+  const key = getApiKey();
+  const model = getSelectedModel();
+  const mode = getEngineMode();
+  const srvUrl = getServerUrl();
+
+  if (inputApiKey) inputApiKey.value = key;
+  if (selectModel) selectModel.value = model;
+  if (selectEngineMode) selectEngineMode.value = mode;
+  if (inputServerUrl) inputServerUrl.value = srvUrl;
+
+  updateStatusUI();
+}
+
+function updateStatusUI() {
+  const mode = getEngineMode();
+  const model = getSelectedModel().replace("gemini-", "").replace("-preview", "");
+
+  if (isTermuxConnected && (mode === "auto" || mode === "termux")) {
+    statusDot.style.backgroundColor = "var(--accent-green)";
+    statusDot.style.boxShadow = "0 0 10px var(--accent-green)";
+    modelLabel.textContent = `Termux (${model})`;
+    statusPill.title = `Termux Linux Agent Active on ${getServerUrl()}`;
+  } else if (getApiKey()) {
+    statusDot.style.backgroundColor = "var(--accent-green)";
+    statusDot.style.boxShadow = "0 0 6px var(--accent-green)";
+    modelLabel.textContent = `${model}`;
+    statusPill.title = "Standalone Mobile Mode (Direct Gemini API)";
+  } else {
+    statusDot.style.backgroundColor = "var(--accent-amber)";
+    statusDot.style.boxShadow = "none";
+    modelLabel.textContent = "No API Key";
+    statusPill.title = "Please enter Gemini API key in Settings";
+  }
+}
+
+async function checkTermuxHealth() {
+  const srvUrl = getServerUrl();
+  const mode = getEngineMode();
+
+  if (mode === "standalone") {
+    isTermuxConnected = false;
+    updateStatusUI();
+    return;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+    const res = await fetch(`${srvUrl}/api/status`, {
+      method: "GET",
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      const wasConnected = isTermuxConnected;
+      isTermuxConnected = (data.status === "ready");
+
+      if (data.workspace) {
+        termuxWorkspacePath = data.workspace;
+        if (inputWorkspace) inputWorkspace.value = data.workspace;
+      }
+      if (data.model && selectModel) {
+        selectModel.value = data.model;
+      }
+      if (data.has_api_key && inputApiKey && !inputApiKey.value) {
+        inputApiKey.placeholder = "Configured on Termux Server";
+      }
+
+      updateStatusUI();
+
+      if (!wasConnected && isTermuxConnected) {
+        console.log("Connected to Termux Linux Agent at", srvUrl);
+        renderWorkspaceDrawer();
+      }
+    } else {
+      isTermuxConnected = false;
+      updateStatusUI();
+    }
+  } catch (err) {
+    isTermuxConnected = false;
+    updateStatusUI();
+  }
+}
+
+async function testServerConnection() {
+  const url = inputServerUrl.value.trim().replace(/\/+$/, "");
+  connectionStatusHint.textContent = `Pinging ${url}...`;
+  connectionStatusHint.style.color = "var(--accent-amber)";
+
+  const t0 = performance.now();
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    const res = await fetch(`${url}/api/status`, {
+      method: "GET",
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    const latency = Math.round(performance.now() - t0);
+    if (res.ok) {
+      const data = await res.json();
+      connectionStatusHint.textContent = `✅ Connected (${latency}ms) - ${data.engine || "Termux Linux Agent"} Ready`;
+      connectionStatusHint.style.color = "var(--accent-green)";
+    } else {
+      connectionStatusHint.textContent = `⚠️ Server returned HTTP ${res.status}`;
+      connectionStatusHint.style.color = "var(--accent-amber)";
+    }
+  } catch (err) {
+    connectionStatusHint.textContent = `❌ Unreachable: ${err.message}. Ensure 'python run.py' is running.`;
+    connectionStatusHint.style.color = "var(--accent-red)";
+  }
+}
+
+async function saveSettings() {
+  const key = inputApiKey.value.trim();
+  const model = selectModel.value;
+  const mode = selectEngineMode.value;
+  const srvUrl = inputServerUrl.value.trim().replace(/\/+$/, "") || "http://localhost:8000";
+
+  if (key) {
+    localStorage.setItem("antigravity_api_key", key);
+  }
+  localStorage.setItem("antigravity_model", model);
+  localStorage.setItem("antigravity_engine_mode", mode);
+  localStorage.setItem("antigravity_server_url", srvUrl);
+
+  // Sync settings with Termux server if online
+  if (isTermuxConnected) {
+    try {
+      await fetch(`${srvUrl}/api/settings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          api_key: key || undefined,
+          model_name: model,
+          workspace_dir: inputWorkspace ? inputWorkspace.value.trim() : undefined
+        })
+      });
+    } catch (e) {}
+  }
+
+  settingsModal.classList.add("hidden");
+  initSettings();
+  checkTermuxHealth();
+}
+
+// ==========================================
+// 2. STARTER TEMPLATES & CODE STORE
 // ==========================================
 const STARTER_TEMPLATES = {
   canvas_game: {
@@ -174,7 +358,6 @@ let enemies = [];
 let particles = [];
 let lastShoot = 0;
 
-// Touch / Mouse control
 let targetX = player.x;
 let targetY = player.y;
 
@@ -216,17 +399,14 @@ let lastSpawn = 0;
 function gameLoop(timestamp) {
   ctx.clearRect(0, 0, width, height);
 
-  // Smooth player movement
   player.x += (targetX - player.x) * 0.2;
   player.y += (targetY - player.y) * 0.2;
 
-  // Auto fire
   if (timestamp - lastShoot > 180) {
     bullets.push({ x: player.x, y: player.y - player.radius, speed: 9 });
     lastShoot = timestamp;
   }
 
-  // Draw & update bullets
   for (let i = bullets.length - 1; i >= 0; i--) {
     const b = bullets[i];
     b.y -= b.speed;
@@ -240,13 +420,11 @@ function gameLoop(timestamp) {
     if (b.y < -10) bullets.splice(i, 1);
   }
 
-  // Spawn enemies
   if (timestamp - lastSpawn > 900) {
     spawnEnemy();
     lastSpawn = timestamp;
   }
 
-  // Draw & update enemies
   for (let i = enemies.length - 1; i >= 0; i--) {
     const en = enemies[i];
     en.y += en.speed;
@@ -259,7 +437,6 @@ function gameLoop(timestamp) {
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Bullet collision
     for (let j = bullets.length - 1; j >= 0; j--) {
       const b = bullets[j];
       const dist = Math.hypot(b.x - en.x, b.y - en.y);
@@ -273,7 +450,6 @@ function gameLoop(timestamp) {
       }
     }
 
-    // Player collision
     if (en && Math.hypot(player.x - en.x, player.y - en.y) < player.radius + en.radius) {
       createExplosion(player.x, player.y, "#ffffff");
       enemies.splice(i, 1);
@@ -284,7 +460,6 @@ function gameLoop(timestamp) {
     if (en && en.y > height + 30) enemies.splice(i, 1);
   }
 
-  // Particles
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     p.x += p.vx;
@@ -300,7 +475,6 @@ function gameLoop(timestamp) {
     if (p.alpha <= 0) particles.splice(i, 1);
   }
 
-  // Draw Player
   ctx.save();
   ctx.fillStyle = player.color;
   ctx.shadowBlur = 16;
@@ -341,49 +515,22 @@ console.log("Neon Defender game engine initialized at 60 FPS!");`
   <script src="app.js"></script>
 </body>
 </html>`,
-    "style.css": `body {
-  background: #0b0d12;
-  color: #f0f4f9;
-  font-family: -apple-system, sans-serif;
-  margin: 0;
-  padding: 16px;
-}
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-#add-btn {
-  background: #4285f4;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-weight: bold;
-}
-.note-card {
-  background: #151922;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 10px;
-}
+    "style.css": `body { background: #0b0d12; color: #f0f4f9; font-family: -apple-system, sans-serif; margin: 0; padding: 16px; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+#add-btn { background: #4285f4; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-weight: bold; }
+.note-card { background: #151922; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
 .note-title { font-weight: 600; margin-bottom: 6px; }
 .note-date { font-size: 11px; color: #9aa0a6; }`,
     "app.js": `const notesList = document.getElementById("notes-list");
 const addBtn = document.getElementById("add-btn");
-
 let notes = JSON.parse(localStorage.getItem("notes_data") || "[]");
 if (notes.length === 0) {
   notes = [
-    { title: "Review Gemini 3.5 Models", content: "Switch to 3.5 Flash Lite for sub-3s response latency.", date: "Today" },
     { title: "Antigravity Mobile IDE", content: "Standalone APK running with bundled Prism and Live Sandbox.", date: "Today" }
   ];
 }
-
 function render() {
-  notesList.innerHTML = notes.map((n, i) => \`
+  notesList.innerHTML = notes.map((n) => \`
     <div class="note-card">
       <div class="note-title">\${n.title}</div>
       <p style="font-size:13px; color:#c0c6d0; margin-bottom:6px;">\${n.content}</p>
@@ -391,7 +538,6 @@ function render() {
     </div>
   \`).join("");
 }
-
 addBtn.onclick = () => {
   const title = prompt("Note Title:");
   if (!title) return;
@@ -400,9 +546,7 @@ addBtn.onclick = () => {
   localStorage.setItem("notes_data", JSON.stringify(notes));
   render();
 };
-
-render();
-console.log("Obsidian Notes app loaded with", notes.length, "notes.");`
+render();`
   },
 
   canvas_chart: {
@@ -433,22 +577,15 @@ console.log("Obsidian Notes app loaded with", notes.length, "notes.");`
     const ctx = canvas.getContext("2d");
     canvas.width = canvas.clientWidth * window.devicePixelRatio;
     canvas.height = canvas.clientHeight * window.devicePixelRatio;
-
     const data = Array.from({ length: 40 }, () => Math.random() * 60 + 20);
-
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const w = canvas.width;
-      const h = canvas.height;
-
-      // Draw grid
+      const w = canvas.width, h = canvas.height;
       ctx.strokeStyle = "rgba(255,255,255,0.05)";
       ctx.lineWidth = 1;
       for (let y = 0; y < h; y += h / 5) {
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
       }
-
-      // Draw gradient line
       ctx.strokeStyle = "#4285f4";
       ctx.lineWidth = 3 * window.devicePixelRatio;
       ctx.beginPath();
@@ -458,16 +595,12 @@ console.log("Obsidian Notes app loaded with", notes.length, "notes.");`
         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       });
       ctx.stroke();
-
-      // Cycle data
       data.shift();
       data.push(Math.max(10, Math.min(95, data[data.length - 1] + (Math.random() - 0.5) * 15)));
-
       document.getElementById("m-cpu").textContent = Math.round(data[data.length - 1]) + "%";
       setTimeout(draw, 250);
     }
     draw();
-    console.log("Telemetry real-time chart started.");
   </script>
 </body>
 </html>`
@@ -554,7 +687,7 @@ if __name__ == "__main__":
 };
 
 // ==========================================
-// 2. VIRTUAL WORKSPACE FILE SYSTEM
+// 3. UNIFIED WORKSPACE MANAGER (DISK + VIRTUAL)
 // ==========================================
 const Workspace = {
   KEY: "antigravity_workspace_files",
@@ -562,7 +695,6 @@ const Workspace = {
   init() {
     const saved = localStorage.getItem(this.KEY);
     if (!saved) {
-      // Seed with Canvas Game Starter
       this.loadTemplate("canvas_game", false);
     }
   },
@@ -597,15 +729,6 @@ const Workspace = {
     this.saveAll(files);
   },
 
-  rename(oldPath, newPath) {
-    const files = this.getAll();
-    if (files[oldPath] !== undefined) {
-      files[newPath] = files[oldPath];
-      delete files[oldPath];
-      this.saveAll(files);
-    }
-  },
-
   list() {
     const files = this.getAll();
     return Object.keys(files).sort();
@@ -631,7 +754,6 @@ const Workspace = {
   }
 };
 
-// File icon helper
 function getFileIcon(filename) {
   const ext = filename.split(".").pop().toLowerCase();
   switch (ext) {
@@ -647,50 +769,8 @@ function getFileIcon(filename) {
 }
 
 // ==========================================
-// 3. SETTINGS & MODEL MANAGEMENT
+// 4. CHAT RENDERING & TOOL EXECUTION CARDS
 // ==========================================
-function getApiKey() {
-  return localStorage.getItem("antigravity_api_key") || "";
-}
-
-function getSelectedModel() {
-  return localStorage.getItem("antigravity_model") || "gemini-3.5-flash-lite";
-}
-
-function initSettings() {
-  const key = getApiKey();
-  const model = getSelectedModel();
-
-  if (key) {
-    inputApiKey.value = key;
-    statusDot.style.backgroundColor = "var(--accent-green)";
-    statusDot.style.boxShadow = "0 0 8px var(--accent-green)";
-  } else {
-    statusDot.style.backgroundColor = "var(--accent-amber)";
-    statusDot.style.boxShadow = "none";
-  }
-
-  selectModel.value = model;
-  modelLabel.textContent = model.replace("gemini-", "").replace("-preview", "");
-}
-
-function saveSettings() {
-  const key = inputApiKey.value.trim();
-  const model = selectModel.value;
-
-  if (key) {
-    localStorage.setItem("antigravity_api_key", key);
-  }
-  localStorage.setItem("antigravity_model", model);
-
-  settingsModal.classList.add("hidden");
-  initSettings();
-}
-
-// ==========================================
-// 4. CHAT RENDERING & CODE BLOCK ACTIONS
-// ==========================================
-// Setup Marked with custom code renderer
 function setupMarkdownParser() {
   if (!window.marked) return;
 
@@ -737,7 +817,6 @@ function setupMarkdownParser() {
   marked.use({ renderer });
 }
 
-// Action callbacks on in-chat code blocks
 window.copyCodeSnippet = function(btn) {
   const card = btn.closest(".code-card");
   const rawCode = card.querySelector(".raw-code-store").value;
@@ -761,8 +840,12 @@ window.editCodeSnippet = function(btn) {
   else if (lang === "bash" || lang === "sh") ext = "sh";
 
   const tempName = `snippet_${Date.now().toString().slice(-4)}.${ext}`;
-  Workspace.set(tempName, rawCode);
-  openEditorWithCurrentFile(tempName);
+  if (isTermuxConnected) {
+    saveFileToDisk(tempName, rawCode).then(() => openEditorWithCurrentFile(tempName));
+  } else {
+    Workspace.set(tempName, rawCode);
+    openEditorWithCurrentFile(tempName);
+  }
 };
 
 window.runCodeSnippet = function(btn) {
@@ -821,6 +904,65 @@ function appendModelChunk(text) {
   scrollToBottom();
 }
 
+// Live Tool Execution Cards for Termux Agent
+function renderToolCall(toolName, args) {
+  if (!currentAgentMessageEl) {
+    createAgentMessageContainer();
+  }
+
+  const card = document.createElement("div");
+  card.className = "tool-card";
+
+  let argSummary = "";
+  if (toolName === "run_shell") {
+    argSummary = args.command || "";
+  } else if (toolName === "read_file" || toolName === "write_file" || toolName === "patch_file") {
+    argSummary = args.path || "";
+  } else if (toolName === "git_checkpoint") {
+    argSummary = args.message || "";
+  }
+
+  card.innerHTML = `
+    <div class="tool-header">
+      <div class="tool-title">
+        <span>⚙</span>
+        <span>${escapeHtml(toolName)}</span>
+        <span style="color:var(--text-muted);font-weight:normal;font-size:0.75rem">${escapeHtml(argSummary)}</span>
+      </div>
+      <span class="tool-badge running">RUNNING</span>
+    </div>
+    <div class="tool-body">${escapeHtml(JSON.stringify(args, null, 2))}</div>
+  `;
+
+  currentAgentMessageEl.appendChild(card);
+  activeToolCards[toolName] = card;
+  scrollToBottom();
+}
+
+function renderToolResult(toolName, result) {
+  const card = activeToolCards[toolName];
+  if (!card) return;
+
+  const badge = card.querySelector(".tool-badge");
+  const isSuccess = result.status === "success" || result.exit_code === 0;
+
+  badge.className = `tool-badge ${isSuccess ? "success" : "error"}`;
+  badge.textContent = isSuccess ? "SUCCESS" : "ERROR";
+
+  const body = card.querySelector(".tool-body");
+  if (toolName === "run_shell" && (result.stdout || result.stderr)) {
+    let out = "";
+    if (result.stdout) out += result.stdout;
+    if (result.stderr) out += (out ? "\n" : "") + "[stderr]\n" + result.stderr;
+    body.textContent = out;
+  } else if (result.content && toolName === "read_file") {
+    body.textContent = result.content.slice(0, 500) + (result.content.length > 500 ? "\n... (truncated)" : "");
+  } else {
+    body.textContent = JSON.stringify(result, null, 2);
+  }
+  scrollToBottom();
+}
+
 function renderErrorMessage(msg) {
   if (!currentAgentMessageEl) {
     createAgentMessageContainer();
@@ -862,18 +1004,11 @@ function escapeHtml(str) {
 }
 
 // ==========================================
-// 5. DIRECT GEMINI API CALLER
+// 5. HYBRID DISPATCHER: TERMUX LINUX vs STANDALONE
 // ==========================================
 async function sendPrompt(customPrompt = null) {
   const text = customPrompt ? customPrompt.trim() : promptInput.value.trim();
   if (!text) return;
-
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    settingsModal.classList.remove("hidden");
-    alert("Please enter your Gemini API key in Settings first.");
-    return;
-  }
 
   appendUserMessage(text);
   if (!customPrompt) {
@@ -883,15 +1018,109 @@ async function sendPrompt(customPrompt = null) {
 
   showActivity("Thinking...");
 
+  const mode = getEngineMode();
+  const shouldUseTermux = (mode === "termux") || (mode === "auto" && isTermuxConnected);
+
+  if (shouldUseTermux) {
+    await sendPromptToTermuxAgent(text);
+  } else {
+    await sendPromptToStandaloneGemini(text);
+  }
+}
+
+// Route A: Termux Linux Agent Engine (SSE Stream + Real Bash/File Tools)
+async function sendPromptToTermuxAgent(text) {
+  const srvUrl = getServerUrl();
+
+  try {
+    const res = await fetch(`${srvUrl}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: text })
+    });
+
+    if (!res.ok) {
+      hideActivity();
+      renderErrorMessage(`Termux Server HTTP ${res.status}: ${res.statusText}`);
+      finalizeAgentMessage();
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split("\n\n");
+      buffer = parts.pop();
+
+      for (const part of parts) {
+        const trimmed = part.trim();
+        if (trimmed.startsWith("data: ")) {
+          try {
+            const eventJson = JSON.parse(trimmed.slice(6));
+            handleTermuxAgentEvent(eventJson);
+            if (eventJson.type === "done" || eventJson.type === "error") {
+              try { await reader.cancel(); } catch (e) {}
+              return;
+            }
+          } catch (e) {
+            console.error("SSE parse error:", e);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    hideActivity();
+    renderErrorMessage(`Connection to Termux server lost: ${err.message}. Check that 'python run.py' is active.`);
+    finalizeAgentMessage();
+  }
+}
+
+function handleTermuxAgentEvent(event) {
+  switch (event.type) {
+    case "status":
+      showActivity(event.data);
+      break;
+    case "chunk":
+      appendModelChunk(event.text);
+      break;
+    case "tool_call":
+      renderToolCall(event.tool, event.args);
+      break;
+    case "tool_result":
+      renderToolResult(event.tool, event.result);
+      break;
+    case "error":
+      hideActivity();
+      renderErrorMessage(event.message);
+      break;
+    case "done":
+      hideActivity();
+      finalizeAgentMessage();
+      break;
+  }
+}
+
+// Route B: Standalone Direct Gemini API (Sub-3s REST API + Virtual Workspace)
+async function sendPromptToStandaloneGemini(text) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    settingsModal.classList.remove("hidden");
+    alert("Please enter your Gemini API key in Settings first.");
+    hideActivity();
+    return;
+  }
+
   const model = getSelectedModel();
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-  chatHistory.push({
-    role: "user",
-    parts: [{ text: text }]
-  });
+  chatHistory.push({ role: "user", parts: [{ text: text }] });
 
-  // Provide workspace context to AI
   const filesList = Workspace.list();
   const workspaceContext = `The user is in Antigravity Mobile IDE on Android.
 Current workspace files: ${filesList.join(", ")}.
@@ -904,9 +1133,7 @@ If asked to write or fix code, return complete, runnable, syntax-clean code insi
         text: `You are Antigravity Mobile, an autonomous agentic AI software engineering IDE companion on Android. Help the user build, code, debug, refactor, and architect applications on mobile and desktop. Provide high quality, production-ready code with clear explanations. ${workspaceContext}`
       }]
     },
-    generationConfig: {
-      temperature: 0.2
-    }
+    generationConfig: { temperature: 0.2 }
   };
 
   try {
@@ -952,9 +1179,13 @@ function sendQuickPrompt(prompt) {
   sendPrompt();
 }
 
-// Quick action shortcuts
 function handleQuickAction(action) {
-  const currentCode = Workspace.get(activeFilePath);
+  if (isTermuxConnected && action === "termux") {
+    sendPrompt("Check device status using get_device_status, list files in the workspace, and run termux-battery-status to inspect battery.");
+    return;
+  }
+
+  const currentCode = editorTextarea ? editorTextarea.value : Workspace.get(activeFilePath);
   let prompt = "";
 
   switch (action) {
@@ -981,11 +1212,58 @@ function handleQuickAction(action) {
 }
 
 // ==========================================
-// 6. WORKSPACE EXPLORER DRAWER
+// 6. WORKSPACE EXPLORER (DISK + VIRTUAL)
 // ==========================================
-function renderWorkspaceDrawer() {
+async function renderWorkspaceDrawer() {
+  if (isTermuxConnected) {
+    await renderTermuxDiskWorkspace();
+  } else {
+    renderVirtualWorkspace();
+  }
+}
+
+async function renderTermuxDiskWorkspace() {
+  const srvUrl = getServerUrl();
+  try {
+    const res = await fetch(`${srvUrl}/api/files`);
+    const data = await res.json();
+
+    const query = workspaceSearchInput.value.toLowerCase().trim();
+    fileList.innerHTML = "";
+
+    if (data.status === "success" && data.items && data.items.length > 0) {
+      const items = query ? data.items.filter(i => i.name.toLowerCase().includes(query)) : data.items;
+      workspaceFileCount.textContent = `${items.length} files (Termux Disk)`;
+
+      items.forEach(item => {
+        const el = document.createElement("div");
+        el.className = "file-item";
+        el.innerHTML = `
+          <div class="file-item-left">
+            <span class="file-icon">${item.type === "dir" ? "📁" : getFileIcon(item.name)}</span>
+            <span class="file-name">${escapeHtml(item.rel_path)}</span>
+          </div>
+          <div class="file-item-actions">
+            ${item.type === "file" ? `<button class="file-action-icon" title="Delete" onclick="deleteDiskFile(event, '${escapeHtml(item.rel_path)}')">🗑️</button>` : ""}
+          </div>
+        `;
+        if (item.type === "file") {
+          el.querySelector(".file-item-left").onclick = () => openFileFromDisk(item.rel_path);
+        }
+        fileList.appendChild(el);
+      });
+    } else {
+      workspaceFileCount.textContent = "0 files (Termux)";
+      fileList.innerHTML = '<p class="empty-state" style="padding:16px;text-align:center;color:#666">No files in Termux workspace.</p>';
+    }
+  } catch (err) {
+    renderVirtualWorkspace();
+  }
+}
+
+function renderVirtualWorkspace() {
   const files = Workspace.list();
-  workspaceFileCount.textContent = `${files.length} file${files.length === 1 ? "" : "s"}`;
+  workspaceFileCount.textContent = `${files.length} file${files.length === 1 ? "" : "s"} (Local)`;
 
   const query = workspaceSearchInput.value.toLowerCase().trim();
   const filtered = query ? files.filter(f => f.toLowerCase().includes(query)) : files;
@@ -1011,6 +1289,54 @@ function renderWorkspaceDrawer() {
     fileList.appendChild(item);
   });
 }
+
+async function openFileFromDisk(path) {
+  const srvUrl = getServerUrl();
+  try {
+    const res = await fetch(`${srvUrl}/api/file?path=${encodeURIComponent(path)}`);
+    const data = await res.json();
+    if (data.status === "success") {
+      activeFilePath = path;
+      editorFilename.textContent = path;
+      editorTextarea.value = data.content || "";
+      activeFileIsDirty = false;
+      editorDirtyIndicator.classList.add("hidden");
+      updateLineNumbers();
+      editorModal.classList.remove("hidden");
+    } else {
+      alert("Could not load file: " + (data.message || "Unknown error"));
+    }
+  } catch (err) {
+    alert("Failed to load file from Termux: " + err.message);
+  }
+}
+
+async function saveFileToDisk(path, content) {
+  const srvUrl = getServerUrl();
+  try {
+    const res = await fetch(`${srvUrl}/api/file`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path, content, overwrite: true })
+    });
+    const data = await res.json();
+    return data.status === "success";
+  } catch (err) {
+    return false;
+  }
+}
+
+window.deleteDiskFile = async function(e, path) {
+  e.stopPropagation();
+  if (!confirm(`Delete ${path} from Termux storage?`)) return;
+  const srvUrl = getServerUrl();
+  try {
+    await fetch(`${srvUrl}/api/file?path=${encodeURIComponent(path)}`, { method: "DELETE" });
+    renderWorkspaceDrawer();
+  } catch (err) {
+    alert("Delete failed: " + err.message);
+  }
+};
 
 window.deleteWorkspaceFile = function(e, filename) {
   e.stopPropagation();
@@ -1041,13 +1367,17 @@ drawerOverlay.addEventListener("click", () => {
 
 workspaceSearchInput.addEventListener("input", renderWorkspaceDrawer);
 
-btnNewFile.addEventListener("click", () => {
+btnNewFile.addEventListener("click", async () => {
   const name = prompt("Enter new filename (e.g., script.py, app.js, index.html):");
   if (!name) return;
-  if (!Workspace.get(name)) {
+
+  if (isTermuxConnected) {
+    await saveFileToDisk(name, "");
+    await openFileFromDisk(name);
+  } else {
     Workspace.set(name, "");
+    openEditorWithCurrentFile(name);
   }
-  openEditorWithCurrentFile(name);
   fileDrawer.classList.remove("open");
   drawerOverlay.classList.remove("active");
 });
@@ -1058,14 +1388,18 @@ inputFileImport.addEventListener("change", (e) => {
   const files = Array.from(e.target.files);
   files.forEach(f => {
     const reader = new FileReader();
-    reader.onload = (evt) => {
-      Workspace.set(f.name, evt.target.result);
+    reader.onload = async (evt) => {
+      if (isTermuxConnected) {
+        await saveFileToDisk(f.name, evt.target.result);
+      } else {
+        Workspace.set(f.name, evt.target.result);
+      }
       renderWorkspaceDrawer();
     };
     reader.readAsText(f);
   });
   inputFileImport.value = "";
-  alert(`Imported ${files.length} file(s) into workspace.`);
+  alert(`Imported ${files.length} file(s).`);
 });
 
 btnExportWorkspace.addEventListener("click", () => {
@@ -1111,8 +1445,13 @@ function openEditorWithCurrentFile(filename) {
   editorModal.classList.remove("hidden");
 }
 
-function saveActiveFile() {
-  Workspace.set(activeFilePath, editorTextarea.value);
+async function saveActiveFile() {
+  const content = editorTextarea.value;
+  if (isTermuxConnected) {
+    await saveFileToDisk(activeFilePath, content);
+  } else {
+    Workspace.set(activeFilePath, content);
+  }
   activeFileIsDirty = false;
   editorDirtyIndicator.classList.add("hidden");
   btnEditorSave.textContent = "Saved!";
@@ -1125,12 +1464,10 @@ editorTextarea.addEventListener("input", () => {
   updateLineNumbers();
 });
 
-// Sync scrolling between line numbers and textarea
 editorTextarea.addEventListener("scroll", () => {
   editorLineNumbers.scrollTop = editorTextarea.scrollTop;
 });
 
-// Handle Tab key
 editorTextarea.addEventListener("keydown", (e) => {
   if (e.key === "Tab") {
     e.preventDefault();
@@ -1142,7 +1479,7 @@ editorTextarea.addEventListener("keydown", (e) => {
   }
 });
 
-// Mobile Coding Symbols Ribbon touch listeners
+// Mobile Coding Symbols Ribbon
 document.querySelectorAll(".symbol-key").forEach(btn => {
   btn.addEventListener("click", () => {
     const insert = btn.getAttribute("data-insert");
@@ -1191,7 +1528,7 @@ window.executeAiFileAction = function(actionType) {
   handleQuickAction(actionType);
 };
 
-// Editor Search / Find in Code
+// Editor Search / Find
 btnEditorSearchToggle.addEventListener("click", () => {
   editorSearchBar.classList.toggle("hidden");
   if (!editorSearchBar.classList.contains("hidden")) {
@@ -1256,7 +1593,6 @@ function openLivePreview() {
   const css = Workspace.get("style.css") || "";
   const js = Workspace.get("app.js") || "";
 
-  // Compile standalone document with virtual console hook
   const consoleScript = `
     <script>
       (function() {
@@ -1316,7 +1652,6 @@ function appendConsoleLog(level, text) {
   previewConsoleLogs.scrollTop = previewConsoleLogs.scrollHeight;
 }
 
-// Receive logs from sandboxed iframe
 window.addEventListener("message", (e) => {
   if (e.data && e.data.type === "CONSOLE_LOG") {
     appendConsoleLog(e.data.level, e.data.text);
@@ -1417,11 +1752,16 @@ promptInput.addEventListener("keydown", (e) => {
   }
 });
 
-btnSettings.addEventListener("click", () => settingsModal.classList.remove("hidden"));
+btnSettings.addEventListener("click", () => {
+  initSettings();
+  settingsModal.classList.remove("hidden");
+});
 btnCloseSettings.addEventListener("click", () => settingsModal.classList.add("hidden"));
 btnSaveSettings.addEventListener("click", saveSettings);
+if (btnTestConnection) {
+  btnTestConnection.addEventListener("click", testServerConnection);
+}
 
-// Auto-expand textarea
 promptInput.addEventListener("input", () => {
   promptInput.style.height = "auto";
   promptInput.style.height = Math.min(promptInput.scrollHeight, 110) + "px";
@@ -1432,4 +1772,8 @@ window.addEventListener("DOMContentLoaded", () => {
   initSettings();
   Workspace.init();
   setupVoice();
+
+  // Initial Termux health check and periodic heartbeat
+  checkTermuxHealth();
+  serverCheckTimer = setInterval(checkTermuxHealth, 8000);
 });

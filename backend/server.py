@@ -50,14 +50,16 @@ class AntigravityHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
         self.end_headers()
         self.wfile.write(body)
 
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "*")
         self.send_header("Content-Length", "0")
         self.end_headers()
 
@@ -71,6 +73,7 @@ class AntigravityHandler(BaseHTTPRequestHandler):
             status_info = agent.tools.get_device_status()
             self._send_json({
                 "status": "ready",
+                "engine": "termux_linux",
                 "has_api_key": bool(agent.api_key),
                 "model": agent.model_name,
                 "workspace": str(agent.workspace_dir),
@@ -128,8 +131,11 @@ class AntigravityHandler(BaseHTTPRequestHandler):
         path = parsed.path
 
         content_length = int(self.headers.get("Content-Length", 0))
-        body_bytes = self.rfile.read(content_length)
-        payload = json.loads(body_bytes.decode("utf-8")) if body_bytes else {}
+        body_bytes = self.rfile.read(content_length) if content_length > 0 else b"{}"
+        try:
+            payload = json.loads(body_bytes.decode("utf-8")) if body_bytes else {}
+        except Exception:
+            payload = {}
 
         if path == "/api/settings":
             if "api_key" in payload and payload["api_key"]:
@@ -154,7 +160,28 @@ class AntigravityHandler(BaseHTTPRequestHandler):
             self._send_json({"status": "success", "model": agent.model_name, "workspace": str(agent.workspace_dir)})
             return
 
-        if path == "/api/chat":
+        if path == "/api/file":
+            file_path = payload.get("path")
+            content = payload.get("content", "")
+            overwrite = payload.get("overwrite", True)
+            if not file_path:
+                self._send_json({"status": "error", "message": "Missing path parameter"}, 400)
+                return
+            res = agent.tools.write_file(file_path, content, overwrite=overwrite)
+            self._send_json(res)
+            return
+
+        if path == "/api/shell":
+            command = payload.get("command", "")
+            timeout = payload.get("timeout", 60)
+            if not command:
+                self._send_json({"status": "error", "message": "Missing command parameter"}, 400)
+                return
+            res = agent.tools.run_shell(command, timeout_seconds=timeout)
+            self._send_json(res)
+            return
+
+        if path in ("/api/chat", "/api/prompt"):
             prompt = payload.get("prompt", "").strip()
             if not prompt:
                 self._send_json({"status": "error", "message": "Empty prompt"}, 400)
@@ -166,6 +193,7 @@ class AntigravityHandler(BaseHTTPRequestHandler):
             self.send_header("Cache-Control", "no-cache, no-transform")
             self.send_header("Connection", "close")
             self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Headers", "*")
             self.end_headers()
 
             try:
@@ -183,6 +211,29 @@ class AntigravityHandler(BaseHTTPRequestHandler):
 
         self.send_error(404, "Unknown endpoint")
 
+    def do_DELETE(self):
+        parsed = urlparse(self.path)
+        path = parsed.path
+        query = parse_qs(parsed.query)
+
+        if path == "/api/file":
+            file_path = query.get("path", [""])[0]
+            if not file_path:
+                self._send_json({"status": "error", "message": "Missing path parameter"}, 400)
+                return
+            target = agent.tools._resolve_path(file_path)
+            if target.exists() and target.is_file():
+                try:
+                    target.unlink()
+                    self._send_json({"status": "success", "message": f"Deleted {file_path}"})
+                except Exception as e:
+                    self._send_json({"status": "error", "message": str(e)}, 500)
+            else:
+                self._send_json({"status": "error", "message": f"File not found: {file_path}"}, 404)
+            return
+
+        self.send_error(404, "Unknown endpoint")
+
 
 def run_server(host: str = "0.0.0.0", port: int = 8000):
     server = ThreadingHTTPServer((host, port), AntigravityHandler)
@@ -191,6 +242,7 @@ def run_server(host: str = "0.0.0.0", port: int = 8000):
     print("=" * 60)
     print(f"Workspace Directory : {agent.workspace_dir}")
     print(f"Local Server URL    : http://localhost:{port}")
+    print(f"Model Target        : {agent.model_name}")
     print(f"Has API Key Config  : {bool(agent.api_key)}")
     print("Zero compilation dependencies. 100% Android Termux compatible.")
     print("Press Ctrl+C to stop.")

@@ -19,3 +19,4 @@ local.properties
 *.iml
 *.apk
 phone_*.png
+screen_*.png
