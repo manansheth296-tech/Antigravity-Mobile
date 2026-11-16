@@ -1,12 +1,12 @@
-# Contributing to Antigravity Mobile
+# Contributing to PocketDev Mobile
 
-Thank you for your interest in contributing to **Antigravity Mobile**! We welcome bug reports, feature suggestions, documentation improvements, and pull requests.
+Thank you for your interest in contributing to **PocketDev Mobile**! We welcome bug reports, feature suggestions, documentation improvements, and pull requests.
 
 ---
 
 ## 🛠️ Development Setup
 
-Antigravity Mobile consists of two core layers:
+PocketDev Mobile consists of two core layers:
 1. **Android App (`android/`):** Native Android wrapper (`MainActivity.java`) embedding the mobile IDE with hardware acceleration, audio recording permissions, and native Picture-in-Picture bridge.
 2. **Mobile Web Runtime (`android/app/src/main/assets/` & `frontend/`):** Fullscreen code editor, live sandbox preview runner, offline Prism/Marked runtime, voice coding HUD, and hybrid engine dispatcher.
 3. **Termux Linux Backend (`backend/`):** Pure Python standard library multithreaded server powering bash tool execution, file patching, and git checkpoints.

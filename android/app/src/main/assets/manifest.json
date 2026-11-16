@@ -1,7 +1,7 @@
 {
-  "name": "Antigravity Mobile",
-  "short_name": "Antigravity",
-  "description": "Agentic AI IDE & Coding Companion for Android",
+  "name": "PocketDev Mobile",
+  "short_name": "PocketDev",
+  "description": "Autonomous Agentic AI IDE & Coding Companion for Android",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",

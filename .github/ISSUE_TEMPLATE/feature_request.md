@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea or capability for Antigravity Mobile
+about: Suggest an idea or capability for PocketDev Mobile
 title: '[FEAT] '
 labels: enhancement
 assignees: ''

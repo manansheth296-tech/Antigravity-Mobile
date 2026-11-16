@@ -1,5 +1,5 @@
 """
-Pure Python HTTP Server for Antigravity Mobile.
+Pure Python HTTP Server for PocketDev Mobile.
 Uses Python's standard library (ThreadingHTTPServer) with Server-Sent Events (SSE).
 Zero compiled dependencies - 100% portable on 32-bit and 64-bit Android Termux.
 """
@@ -14,9 +14,13 @@ from urllib.parse import urlparse, parse_qs
 
 from backend.gemini_client import PureGeminiAgent
 
-WORKSPACE_DIR = os.getenv("ANTIGRAVITY_WORKSPACE", str(Path.cwd()))
+WORKSPACE_DIR = os.getenv("POCKETDEV_WORKSPACE", os.getenv("ANTIGRAVITY_WORKSPACE", str(Path.cwd())))
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
-CONFIG_FILE = Path(WORKSPACE_DIR) / ".antigravity_config.json"
+CONFIG_FILE = Path(WORKSPACE_DIR) / ".pocketdev_config.json"
+if not CONFIG_FILE.exists():
+    LEGACY_CONFIG = Path(WORKSPACE_DIR) / ".antigravity_config.json"
+    if LEGACY_CONFIG.exists():
+        CONFIG_FILE = LEGACY_CONFIG
 
 # Load saved API key / config if exists
 initial_key = os.getenv("GEMINI_API_KEY", "")
@@ -38,7 +42,7 @@ agent = PureGeminiAgent(
 )
 
 
-class AntigravityHandler(BaseHTTPRequestHandler):
+class PocketDevHandler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
     def log_message(self, format, *args):
@@ -236,9 +240,9 @@ class AntigravityHandler(BaseHTTPRequestHandler):
 
 
 def run_server(host: str = "0.0.0.0", port: int = 8000):
-    server = ThreadingHTTPServer((host, port), AntigravityHandler)
+    server = ThreadingHTTPServer((host, port), PocketDevHandler)
     print("=" * 60)
-    print("✦ Antigravity Mobile - Pure Python Agent Server ✦")
+    print("✦ PocketDev Mobile - Pure Python Agent Server ✦")
     print("=" * 60)
     print(f"Workspace Directory : {agent.workspace_dir}")
     print(f"Local Server URL    : http://localhost:{port}")
@@ -250,11 +254,11 @@ def run_server(host: str = "0.0.0.0", port: int = 8000):
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\nStopping Antigravity Mobile...")
+        print("\nStopping PocketDev Mobile...")
         server.shutdown()
 
 
 if __name__ == "__main__":
-    host = os.getenv("ANTIGRAVITY_HOST", "0.0.0.0")
-    port = int(os.getenv("ANTIGRAVITY_PORT", 8000))
+    host = os.getenv("POCKETDEV_HOST", os.getenv("ANTIGRAVITY_HOST", "0.0.0.0"))
+    port = int(os.getenv("POCKETDEV_PORT", os.getenv("ANTIGRAVITY_PORT", 8000)))
     run_server(host, port)

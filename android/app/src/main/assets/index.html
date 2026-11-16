@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0a0c10">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Antigravity Mobile IDE</title>
+  <title>PocketDev Mobile IDE</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="prism-tomorrow.min.css">
@@ -29,7 +29,7 @@
         </button>
         <div class="brand">
           <span class="logo-gemini">✦</span>
-          <span class="logo-text">Antigravity</span>
+          <span class="logo-text">PocketDev</span>
           <span class="badge-mobile">IDE</span>
         </div>
       </div>
@@ -152,7 +152,7 @@
     <main id="chat-messages" class="chat-feed">
       <div class="welcome-card" id="welcome-card">
         <div class="welcome-icon">✦</div>
-        <h2>Antigravity Mobile IDE</h2>
+        <h2>PocketDev Mobile IDE</h2>
         <p>Your agentic AI software engineering IDE on Android. Write code, preview web apps live, edit with mobile-friendly symbol keys, and scaffold full projects on the go.</p>
 
         <!-- First-Run Quick Onboarding Card (Shown when API key is not yet set) -->
@@ -174,7 +174,7 @@
             </button>
           </div>
           <div class="first-run-termux-tip">
-            <span>💡 <strong>No Linux or Termux needed:</strong> Antigravity Mobile runs 100% standalone out of the box with the built-in code editor, live web sandbox runner, voice coding, and floating PiP mode.</span>
+            <span>💡 <strong>No Linux or Termux needed:</strong> PocketDev Mobile runs 100% standalone out of the box with the built-in code editor, live web sandbox runner, voice coding, and floating PiP mode.</span>
           </div>
         </div>
 
@@ -217,7 +217,7 @@
             <line x1="8" y1="23" x2="16" y2="23"/>
           </svg>
         </button>
-        <textarea id="prompt-input" rows="1" placeholder="Ask Antigravity to code, build, test, refactor..."></textarea>
+        <textarea id="prompt-input" rows="1" placeholder="Ask PocketDev to code, build, test, refactor..."></textarea>
         <button id="btn-send" class="send-btn" title="Send">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="22" y1="2" x2="11" y2="13"/>
@@ -255,7 +255,7 @@
             </svg>
             <span>Run</span>
           </button>
-          <button id="btn-editor-ask-ai" class="editor-btn ai-btn" title="Ask Antigravity about this file">
+          <button id="btn-editor-ask-ai" class="editor-btn ai-btn" title="Ask PocketDev about this file">
             <span class="sparkle">✦</span>
             <span>Ask AI</span>
           </button>
@@ -432,7 +432,7 @@
     <div id="ai-action-sheet" class="modal hidden">
       <div class="modal-content ai-sheet-content">
         <div class="modal-header">
-          <h3>✦ Ask Antigravity about File</h3>
+          <h3>✦ Ask PocketDev about File</h3>
           <button id="btn-close-ai-sheet" class="icon-btn">&times;</button>
         </div>
         <div class="modal-body ai-options-list">
@@ -516,7 +516,7 @@
           <div class="guide-title-row">
             <span class="guide-icon">📖</span>
             <div>
-              <h3>Antigravity Mobile Guide</h3>
+              <h3>PocketDev Mobile Guide</h3>
               <small>Everything you need to know to code on mobile</small>
             </div>
           </div>
@@ -531,7 +531,7 @@
 
           <div id="guide-tab-standalone" class="guide-tab-pane active">
             <h4>1. Standalone Mode (Default for Everyone)</h4>
-            <p>You do <strong>NOT</strong> need Termux, a terminal, or background servers. Antigravity Mobile runs 100% on your Android phone as a complete mobile IDE:</p>
+            <p>You do <strong>NOT</strong> need Termux, a terminal, or background servers. PocketDev Mobile runs 100% on your Android phone as a complete mobile IDE:</p>
             <ul class="guide-list">
               <li><strong>⚡ Gemini 3.5 Flash Lite:</strong> Direct client-side connection with sub-2.5s generation latency.</li>
               <li><strong>✏️ Mobile Code Editor:</strong> Line numbers, syntax highlighting, search/replace, and the <em>Mobile Symbols Ribbon</em> (<code>Tab</code>, <code>{ }</code>, <code>( )</code>, <code>[ ]</code>, <code>" "</code>, <code>' '</code>, <code>=</code>, <code>;</code>, <code>:</code>, <code>/</code>, <code>$</code>) for rapid phone coding.</li>
@@ -553,12 +553,12 @@
                 <pre><code>curl -sL https://raw.githubusercontent.com/manansheth296-tech/Antigravity-Mobile/main/termux_setup.sh | bash</code></pre>
               </li>
               <li>Start the agent with:
-                <pre><code>cd ~/antigravity && ./start_termux.sh</code></pre>
+                <pre><code>cd ~/pocketdev && ./start_termux.sh</code></pre>
               </li>
             </ol>
             <div class="guide-box">
               <strong>Seamless Hybrid Detection:</strong>
-              <p>Antigravity Mobile automatically detects Termux on <code>localhost:8000</code>. When active, tool execution cards stream directly into chat; when offline, it smoothly falls back to Standalone mode.</p>
+              <p>PocketDev Mobile automatically detects Termux on <code>localhost:8000</code>. When active, tool execution cards stream directly into chat; when offline, it smoothly falls back to Standalone mode.</p>
             </div>
           </div>
 
@@ -576,7 +576,7 @@
                 </div>
               </li>
               <li><strong>🔊 Spoken AI Audio:</strong> Tap the speaker button in the header bar to hear short spoken summaries of what the AI did.</li>
-              <li><strong>⧉ Floating Companion (PiP):</strong> Tap the PiP button in the header (or swipe up to home) to shrink Antigravity into a floating companion window that stays on top while you work in other apps.</li>
+              <li><strong>⧉ Floating Companion (PiP):</strong> Tap the PiP button in the header (or swipe up to home) to shrink PocketDev into a floating companion window that stays on top while you work in other apps.</li>
             </ul>
           </div>
         </div>

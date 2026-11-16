@@ -1,11 +1,11 @@
 #!/bin/bash
 # ==============================================================================
-# Antigravity Mobile - Termux Zero-Dependency Installer
+# PocketDev Mobile - Termux Zero-Dependency Installer
 # ==============================================================================
 
 set -e
 
-echo "✦ Setting up Antigravity Mobile on Android Termux..."
+echo "✦ Setting up PocketDev Mobile on Android Termux..."
 
 # 1. Update Termux base
 echo "→ Updating Termux packages..."
@@ -24,7 +24,7 @@ fi
 echo ""
 echo "=============================================================================="
 echo "✦ Setup Complete!"
-echo "Antigravity Mobile is 100% Pure Python (Zero compiled dependencies)."
+echo "PocketDev Mobile is 100% Pure Python (Zero compiled dependencies)."
 echo ""
 echo "To start the app, run:"
 echo "    python run.py"

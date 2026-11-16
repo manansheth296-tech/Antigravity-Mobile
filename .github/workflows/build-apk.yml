@@ -1,4 +1,4 @@
-name: Build Antigravity Mobile APK
+name: Build PocketDev Mobile APK
 
 on:
   push:
@@ -61,6 +61,7 @@ jobs:
           fi
           echo "Found APK at: $APK_PATH"
           mkdir -p apk_output
+          cp "$APK_PATH" apk_output/PocketDev.apk
           cp "$APK_PATH" apk_output/AntigravityMobile.apk
 
       - name: Upload Build Log on Failure
@@ -73,16 +74,18 @@ jobs:
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: AntigravityMobile-APK
-          path: apk_output/AntigravityMobile.apk
+          name: PocketDev-APK
+          path: apk_output/PocketDev.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         with:
-          files: apk_output/AntigravityMobile.apk
+          files: |
+            apk_output/PocketDev.apk
+            apk_output/AntigravityMobile.apk
           tag_name: v1.0.0
-          name: "Antigravity Mobile v1.0.0"
-          body: "Direct native APK install for Antigravity Mobile on Android."
+          name: "PocketDev Mobile v1.0.0"
+          body: "Direct native APK install for PocketDev Mobile on Android."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,4 +1,4 @@
-package com.antigravity.mobile;
+package com.pocketdev.mobile;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -47,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     try {
                         PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
-                        // 9:16 or 3:4 portrait companion ratio
                         Rational aspectRatio = new Rational(9, 16);
                         builder.setAspectRatio(aspectRatio);
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

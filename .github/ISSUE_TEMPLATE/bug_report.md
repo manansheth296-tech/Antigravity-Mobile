@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Create a report to help improve Antigravity Mobile
+about: Create a report to help improve PocketDev Mobile
 title: '[BUG] '
 labels: bug
 assignees: ''

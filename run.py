@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Antigravity Mobile Runner.
+PocketDev Mobile Runner.
 Starts the pure Python agent server.
 """
 
@@ -15,6 +15,6 @@ sys.path.insert(0, str(WORKSPACE_ROOT))
 from backend.server import run_server
 
 if __name__ == "__main__":
-    host = os.getenv("ANTIGRAVITY_HOST", "0.0.0.0")
-    port = int(os.getenv("ANTIGRAVITY_PORT", 8000))
+    host = os.getenv("POCKETDEV_HOST", os.getenv("ANTIGRAVITY_HOST", "0.0.0.0"))
+    port = int(os.getenv("POCKETDEV_PORT", os.getenv("ANTIGRAVITY_PORT", 8000)))
     run_server(host, port)

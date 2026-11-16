@@ -1,12 +1,12 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ========================================================
-# Antigravity Mobile - Termux Linux Agent 1-Command Setup
+# PocketDev Mobile - Termux Linux Agent 1-Command Setup
 # Runs directly on Android in Termux (32-bit & 64-bit ARM)
 # ========================================================
 
 set -e
 echo "========================================================"
-echo "✦ Antigravity Mobile: Termux Linux Agent Setup ✦"
+echo "✦ PocketDev Mobile: Termux Linux Agent Setup ✦"
 echo "========================================================"
 
 # 1. Update Termux repositories
@@ -23,15 +23,15 @@ if [ ! -d "$HOME/storage" ]; then
     termux-setup-storage || true
 fi
 
-# 4. Clone or update Antigravity repository
-TARGET_DIR="$HOME/antigravity"
-echo "[4/4] Setting up Antigravity in $TARGET_DIR..."
+# 4. Clone or update PocketDev repository
+TARGET_DIR="$HOME/pocketdev"
+echo "[4/4] Setting up PocketDev in $TARGET_DIR..."
 if [ -d "$TARGET_DIR/.git" ]; then
     echo "Updating existing installation..."
     cd "$TARGET_DIR"
     git pull origin main || true
 else
-    echo "Cloning Antigravity Mobile..."
+    echo "Cloning PocketDev Mobile..."
     git clone https://github.com/manansheth296-tech/Antigravity-Mobile.git "$TARGET_DIR"
     cd "$TARGET_DIR"
 fi
@@ -39,10 +39,10 @@ fi
 chmod +x start_termux.sh run.py 2>/dev/null || true
 
 echo "========================================================"
-echo "✅ Setup Complete! Antigravity Mobile is ready on Termux."
+echo "✅ Setup Complete! PocketDev Mobile is ready on Termux."
 echo ""
 echo "To start the autonomous Linux agent server, run:"
-echo "    cd ~/antigravity && ./start_termux.sh"
+echo "    cd ~/pocketdev && ./start_termux.sh"
 echo ""
 echo "The Android app will automatically detect Termux on localhost:8000!"
 echo "========================================================"

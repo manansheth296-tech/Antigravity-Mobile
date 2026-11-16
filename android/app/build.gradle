@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.antigravity.mobile'
+    namespace 'com.pocketdev.mobile'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.antigravity.mobile"
+        applicationId "com.pocketdev.mobile"
         minSdk 24
         targetSdk 34
         versionCode 1
