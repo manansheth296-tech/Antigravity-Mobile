@@ -1302,7 +1302,11 @@ async function openFileFromDisk(path) {
       activeFileIsDirty = false;
       editorDirtyIndicator.classList.add("hidden");
       updateLineNumbers();
-      editorModal.classList.remove("hidden");
+      fileDrawer.classList.remove("open");
+      drawerOverlay.classList.remove("active");
+      fileDrawer.classList.remove("open");
+  drawerOverlay.classList.remove("active");
+  editorModal.classList.remove("hidden");
     } else {
       alert("Could not load file: " + (data.message || "Unknown error"));
     }
@@ -1442,6 +1446,8 @@ function openEditorWithCurrentFile(filename) {
   activeFileIsDirty = false;
   editorDirtyIndicator.classList.add("hidden");
   updateLineNumbers();
+  fileDrawer.classList.remove("open");
+  drawerOverlay.classList.remove("active");
   editorModal.classList.remove("hidden");
 }
 
