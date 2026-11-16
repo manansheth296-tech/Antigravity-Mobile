@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Create a report to help improve PocketDev Mobile
+about: Create a report to help improve PocketIDE
 title: '[BUG] '
 labels: bug
 assignees: ''

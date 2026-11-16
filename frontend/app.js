@@ -1,4 +1,4 @@
-// PocketDev Mobile IDE - Hybrid Dual-Engine Client
+// PocketIDE Mobile - Hybrid Dual-Engine Client
 // Supports:
 // 1. Termux Linux Agent Engine (Server-Sent Events streaming, direct bash execution, real filesystem tools)
 // 2. Standalone On-Device Engine (Direct Gemini 3.5 Flash Lite REST API + Virtual Workspace)
@@ -24,7 +24,7 @@ let termuxWorkspacePath = "";
 let serverCheckTimer = null;
 
 // Audio TTS & PiP State
-let isTtsEnabled = (localStorage.getItem("pocketdev_tts_enabled") || localStorage.getItem("antigravity_tts_enabled")) === "true";
+let isTtsEnabled = (localStorage.getItem("pocketide_tts_enabled") || localStorage.getItem("pocketdev_tts_enabled") || localStorage.getItem("antigravity_tts_enabled")) === "true";
 let isInPiP = false;
 let currentVoiceTranscript = "";
 let detectedVoiceCommand = null;
@@ -131,19 +131,19 @@ const connectionStatusHint = document.getElementById("connection-status-hint");
 // 1. SETTINGS & ENGINE CONFIGURATION
 // ==========================================
 function getApiKey() {
-  return localStorage.getItem("pocketdev_api_key") || localStorage.getItem("antigravity_api_key") || "";
+  return localStorage.getItem("pocketide_api_key") || localStorage.getItem("pocketdev_api_key") || localStorage.getItem("antigravity_api_key") || "";
 }
 
 function getSelectedModel() {
-  return localStorage.getItem("pocketdev_model") || localStorage.getItem("antigravity_model") || "gemini-3.5-flash-lite";
+  return localStorage.getItem("pocketide_model") || localStorage.getItem("pocketdev_model") || localStorage.getItem("antigravity_model") || "gemini-3.5-flash-lite";
 }
 
 function getEngineMode() {
-  return localStorage.getItem("pocketdev_engine_mode") || localStorage.getItem("antigravity_engine_mode") || "auto";
+  return localStorage.getItem("pocketide_engine_mode") || localStorage.getItem("pocketdev_engine_mode") || localStorage.getItem("antigravity_engine_mode") || "auto";
 }
 
 function getServerUrl() {
-  const url = localStorage.getItem("pocketdev_server_url") || localStorage.getItem("antigravity_server_url") || "http://localhost:8000";
+  const url = localStorage.getItem("pocketide_server_url") || localStorage.getItem("pocketdev_server_url") || localStorage.getItem("antigravity_server_url") || "http://localhost:8000";
   return url.replace(/\/+$/, "");
 }
 
@@ -273,11 +273,11 @@ async function saveSettings() {
   const srvUrl = inputServerUrl.value.trim().replace(/\/+$/, "") || "http://localhost:8000";
 
   if (key) {
-    localStorage.setItem("pocketdev_api_key", key);
+    localStorage.setItem("pocketide_api_key", key);
   }
-  localStorage.setItem("pocketdev_model", model);
-  localStorage.setItem("pocketdev_engine_mode", mode);
-  localStorage.setItem("pocketdev_server_url", srvUrl);
+  localStorage.setItem("pocketide_model", model);
+  localStorage.setItem("pocketide_engine_mode", mode);
+  localStorage.setItem("pocketide_server_url", srvUrl);
 
   // Sync settings with Termux server if online
   if (isTermuxConnected) {
@@ -553,7 +553,7 @@ const addBtn = document.getElementById("add-btn");
 let notes = JSON.parse(localStorage.getItem("notes_data") || "[]");
 if (notes.length === 0) {
   notes = [
-    { title: "PocketDev Mobile IDE", content: "Standalone APK running with bundled Prism and Live Sandbox.", date: "Today" }
+    { title: "PocketIDE Mobile", content: "Standalone APK running with bundled Prism and Live Sandbox.", date: "Today" }
   ];
 }
 function render() {
@@ -636,7 +636,7 @@ render();`
   termux_agent: {
     "termux_hardware.py": `#!/usr/bin/env python3
 """
-PocketDev Mobile - Termux Android Hardware Monitor
+PocketIDE - Termux Android Hardware Monitor
 Queries Android hardware via Termux API (zero C compilation, pure stdlib).
 """
 import subprocess
@@ -654,7 +654,7 @@ def run_termux_cmd(cmd):
 
 def main():
     print("=" * 45)
-    print("  PocketDev Mobile: Android Hardware Report")
+    print("  PocketIDE: Android Hardware Report")
     print("=" * 45)
 
     # Battery
@@ -684,7 +684,7 @@ if __name__ == "__main__":
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-app = FastAPI(title="PocketDev Mobile API", version="1.0.0")
+app = FastAPI(title="PocketIDE API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -700,7 +700,7 @@ class PromptRequest(BaseModel):
 
 @app.get("/")
 def health_check():
-    return {"status": "ok", "app": "PocketDev Mobile Microservice"}
+    return {"status": "ok", "app": "PocketIDE Microservice"}
 
 @app.post("/api/echo")
 def echo_payload(req: PromptRequest):
@@ -717,13 +717,13 @@ if __name__ == "__main__":
 // 3. UNIFIED WORKSPACE MANAGER (DISK + VIRTUAL)
 // ==========================================
 const Workspace = {
-  KEY: "pocketdev_workspace_files",
-  OLD_KEY: "antigravity_workspace_files",
+  KEY: "pocketide_workspace_files",
+  OLD_KEYS: ["pocketide_workspace_files", "antigravity_workspace_files"],
 
   init() {
     let saved = localStorage.getItem(this.KEY);
     if (!saved) {
-      const legacy = localStorage.getItem(this.OLD_KEY);
+      const legacy = localStorage.getItem("pocketide_workspace_files") || localStorage.getItem("antigravity_workspace_files");
       if (legacy) {
         localStorage.setItem(this.KEY, legacy);
         saved = legacy;
@@ -1168,7 +1168,7 @@ async function sendPromptToStandaloneGemini(text) {
   chatHistory.push({ role: "user", parts: [{ text: text }] });
 
   const filesList = Workspace.list();
-  const workspaceContext = `The user is in PocketDev Mobile IDE on Android.
+  const workspaceContext = `The user is in PocketIDE Mobile on Android.
 Current workspace files: ${filesList.join(", ")}.
 If asked to write or fix code, return complete, runnable, syntax-clean code inside standard markdown blocks.`;
 
@@ -1176,7 +1176,7 @@ If asked to write or fix code, return complete, runnable, syntax-clean code insi
     contents: chatHistory,
     systemInstruction: {
       parts: [{
-        text: `You are PocketDev Mobile, an autonomous agentic AI software engineering IDE companion on Android. Help the user build, code, debug, refactor, and architect applications on mobile and desktop. Provide high quality, production-ready code with clear explanations. ${workspaceContext}`
+        text: `You are PocketIDE, an autonomous agentic AI software engineering IDE companion on Android. Help the user build, code, debug, refactor, and architect applications on mobile and desktop. Provide high quality, production-ready code with clear explanations. ${workspaceContext}`
       }]
     },
     generationConfig: { temperature: 0.2 }
@@ -1458,7 +1458,7 @@ btnExportWorkspace.addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(allFiles, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `pocketdev_workspace_${Date.now()}.json`;
+  a.download = `pocketide_workspace_${Date.now()}.json`;
   a.click();
 });
 
@@ -1781,7 +1781,7 @@ function initTts() {
 
 function toggleTts() {
   isTtsEnabled = !isTtsEnabled;
-  localStorage.setItem("pocketdev_tts_enabled", isTtsEnabled ? "true" : "false");
+  localStorage.setItem("pocketide_tts_enabled", isTtsEnabled ? "true" : "false");
   initTts();
   triggerHaptic("short");
   if (isTtsEnabled) {
@@ -1945,7 +1945,7 @@ function classifyVoiceCommand(transcript) {
         chatMessages.innerHTML = `
           <div class="welcome-card">
             <div class="welcome-icon">✦</div>
-            <h2>PocketDev Mobile IDE</h2>
+            <h2>PocketIDE Mobile</h2>
             <p>Chat cleared. Ready for your next coding instruction or voice command.</p>
           </div>
         `;
@@ -2131,14 +2131,14 @@ function handleQuickSaveKey() {
     alert("Please paste your Gemini API key.");
     return;
   }
-  localStorage.setItem("pocketdev_api_key", val);
+  localStorage.setItem("pocketide_api_key", val);
   triggerHaptic("success");
   if (firstRunSetupCard) firstRunSetupCard.classList.add("hidden");
   if (inputApiKey) inputApiKey.value = val;
   updateStatusPill();
-  speakText("Gemini API key saved! PocketDev Mobile is ready.");
+  speakText("Gemini API key saved! PocketIDE is ready.");
 
-  appendModelChunk("✦ **Gemini 3.5 Flash Lite Activated!**\n\nYour API key has been verified and saved securely on your device. You can now prompt PocketDev to write code, explain architectures, debug files, or run tests.\n\nTry tapping **'▶ Run Live Web Preview'** to test the built-in game, or type a request below!");
+  appendModelChunk("✦ **Gemini 3.5 Flash Lite Activated!**\n\nYour API key has been verified and saved securely on your device. You can now prompt PocketIDE to write code, explain architectures, debug files, or run tests.\n\nTry tapping **'▶ Run Live Web Preview'** to test the built-in game, or type a request below!");
   finalizeAgentMessage();
 }
 

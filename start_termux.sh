@@ -1,17 +1,17 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# PocketDev Mobile - Termux Engine Launcher
+# PocketIDE - Termux Engine Launcher
 # Starts the pure Python agent server on Android port 8000
 
-export POCKETDEV_HOST="0.0.0.0"
-export POCKETDEV_PORT="8000"
-export POCKETDEV_WORKSPACE="${POCKETDEV_WORKSPACE:-$HOME/pocketdev_workspace}"
+export POCKETIDE_HOST="0.0.0.0"
+export POCKETIDE_PORT="8000"
+export POCKETIDE_WORKSPACE="${POCKETIDE_WORKSPACE:-${POCKETDEV_WORKSPACE:-$HOME/pocketide_workspace}}"
 
-mkdir -p "$POCKETDEV_WORKSPACE"
+mkdir -p "$POCKETIDE_WORKSPACE"
 
 echo "========================================================"
-echo "✦ Starting PocketDev Mobile Termux Agent ✦"
-echo "  Host      : $POCKETDEV_HOST:$POCKETDEV_PORT"
-echo "  Workspace : $POCKETDEV_WORKSPACE"
+echo "✦ Starting PocketIDE Termux Agent ✦"
+echo "  Host      : $POCKETIDE_HOST:$POCKETIDE_PORT"
+echo "  Workspace : $POCKETIDE_WORKSPACE"
 echo "========================================================"
 
 python run.py

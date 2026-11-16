@@ -1,4 +1,4 @@
-package com.pocketdev.mobile;
+package com.pocketide.mobile;
 
 import android.Manifest;
 import android.annotation.SuppressLint;

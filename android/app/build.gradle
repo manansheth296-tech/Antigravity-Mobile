@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.pocketdev.mobile'
+    namespace 'com.pocketide.mobile'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.pocketdev.mobile"
+        applicationId "com.pocketide.mobile"
         minSdk 24
         targetSdk 34
         versionCode 1

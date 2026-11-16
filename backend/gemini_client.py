@@ -23,7 +23,7 @@ from backend.tools import ToolRegistry
 
 GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 
-SYSTEM_INSTRUCTION = """You are PocketDev Mobile, an autonomous agentic AI software engineer and IDE companion running directly on an Android device (via Termux Linux environment).
+SYSTEM_INSTRUCTION = """You are PocketIDE, an autonomous agentic AI software engineer and IDE companion running directly on mobile (and companion workstation environments).
 
 Your Mission:
 1. Help the user build, code, debug, refactor, and manage software repositories directly on this device.
@@ -168,7 +168,7 @@ class PureGeminiAgent:
         data_bytes = json.dumps(payload).encode("utf-8")
         headers = {
             "Content-Type": "application/json",
-            "User-Agent": "PocketDevMobile/1.0"
+            "User-Agent": "PocketIDE/1.0"
         }
 
         req = urllib.request.Request(

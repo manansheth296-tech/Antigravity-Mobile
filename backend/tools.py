@@ -1,5 +1,5 @@
 """
-Tools available to the PocketDev Mobile Agent.
+Tools available to the PocketIDE Agent.
 Provides shell execution, file system operations, git tracking, and device inspection.
 """
 
@@ -176,8 +176,8 @@ class ToolRegistry:
             init_res = self.run_shell("git init")
             if init_res["status"] != "success":
                 return {"status": "error", "message": "Failed to initialize git repository."}
-            self.run_shell("git config user.name 'PocketDev Mobile'")
-            self.run_shell("git config user.email 'agent@pocketdev.local'")
+            self.run_shell("git config user.name 'PocketIDE'")
+            self.run_shell("git config user.email 'agent@pocketide.local'")
         
         add_res = self.run_shell("git add -A")
         commit_res = self.run_shell(f'git commit -m "{message}"')

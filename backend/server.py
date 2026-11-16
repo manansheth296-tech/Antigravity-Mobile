@@ -14,26 +14,44 @@ from urllib.parse import urlparse, parse_qs
 
 from backend.gemini_client import PureGeminiAgent
 
-WORKSPACE_DIR = os.getenv("POCKETDEV_WORKSPACE", os.getenv("ANTIGRAVITY_WORKSPACE", str(Path.cwd())))
+def resolve_workspace() -> str:
+    for ev in ("POCKETIDE_WORKSPACE", "POCKETDEV_WORKSPACE", "ANTIGRAVITY_WORKSPACE"):
+        val = os.getenv(ev)
+        if val and Path(val).exists():
+            return str(Path(val).resolve())
+    if Path("M:/Dev").exists():
+        return str(Path("M:/Dev").resolve())
+    return str(Path.cwd().resolve())
+
+WORKSPACE_DIR = resolve_workspace()
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
-CONFIG_FILE = Path(WORKSPACE_DIR) / ".pocketdev_config.json"
-if not CONFIG_FILE.exists():
-    LEGACY_CONFIG = Path(WORKSPACE_DIR) / ".antigravity_config.json"
-    if LEGACY_CONFIG.exists():
-        CONFIG_FILE = LEGACY_CONFIG
+
+possible_configs = [
+    Path(WORKSPACE_DIR) / ".pocketide_config.json",
+    Path(WORKSPACE_DIR) / ".pocketdev_config.json",
+    Path(WORKSPACE_DIR) / ".antigravity_config.json",
+    Path(__file__).parent.parent / ".pocketide_config.json",
+    Path(__file__).parent.parent / ".pocketdev_config.json",
+    Path(__file__).parent.parent / ".antigravity_config.json",
+]
 
 # Load saved API key / config if exists
 initial_key = os.getenv("GEMINI_API_KEY", "")
 initial_model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
-if CONFIG_FILE.exists():
-    try:
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            cfg = json.load(f)
-            initial_key = cfg.get("api_key", initial_key)
-            initial_model = cfg.get("model_name", initial_model)
-    except Exception:
-        pass
+for cfg_path in possible_configs:
+    if cfg_path.exists():
+        try:
+            with open(cfg_path, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+                if not initial_key:
+                    initial_key = cfg.get("api_key", "")
+                if cfg.get("model_name"):
+                    initial_model = cfg.get("model_name", initial_model)
+            if initial_key:
+                break
+        except Exception:
+            pass
 
 agent = PureGeminiAgent(
     workspace_dir=WORKSPACE_DIR,
@@ -42,7 +60,7 @@ agent = PureGeminiAgent(
 )
 
 
-class PocketDevHandler(BaseHTTPRequestHandler):
+class PocketIDEHandler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
     def log_message(self, format, *args):
@@ -240,9 +258,9 @@ class PocketDevHandler(BaseHTTPRequestHandler):
 
 
 def run_server(host: str = "0.0.0.0", port: int = 8000):
-    server = ThreadingHTTPServer((host, port), PocketDevHandler)
+    server = ThreadingHTTPServer((host, port), PocketIDEHandler)
     print("=" * 60)
-    print("✦ PocketDev Mobile - Pure Python Agent Server ✦")
+    print("✦ PocketIDE - Pure Python Agent Server ✦")
     print("=" * 60)
     print(f"Workspace Directory : {agent.workspace_dir}")
     print(f"Local Server URL    : http://localhost:{port}")
@@ -254,11 +272,11 @@ def run_server(host: str = "0.0.0.0", port: int = 8000):
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\nStopping PocketDev Mobile...")
+        print("\nStopping PocketIDE...")
         server.shutdown()
 
 
 if __name__ == "__main__":
-    host = os.getenv("POCKETDEV_HOST", os.getenv("ANTIGRAVITY_HOST", "0.0.0.0"))
-    port = int(os.getenv("POCKETDEV_PORT", os.getenv("ANTIGRAVITY_PORT", 8000)))
+    host = os.getenv("POCKETIDE_HOST", os.getenv("POCKETDEV_HOST", os.getenv("ANTIGRAVITY_HOST", "0.0.0.0")))
+    port = int(os.getenv("POCKETIDE_PORT", os.getenv("POCKETDEV_PORT", os.getenv("ANTIGRAVITY_PORT", 8000))))
     run_server(host, port)

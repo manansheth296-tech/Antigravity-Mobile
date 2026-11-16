@@ -1,6 +1,6 @@
 {
-  "name": "PocketDev Mobile",
-  "short_name": "PocketDev",
+  "name": "PocketIDE",
+  "short_name": "PocketIDE",
   "description": "Autonomous Agentic AI IDE & Coding Companion for Android",
   "start_url": "/",
   "display": "standalone",

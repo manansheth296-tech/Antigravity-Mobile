@@ -1,4 +1,4 @@
-# ✦ PocketDev Mobile
+# ✦ PocketIDE
 
 <div align="center">
 
@@ -16,7 +16,7 @@
 
 <br/>
 
-<a href="https://github.com/manansheth296-tech/Antigravity-Mobile/releases/download/v1.0.0/PocketDev.apk">
+<a href="https://github.com/manansheth296-tech/Antigravity-Mobile/releases/download/v1.0.0/PocketIDE.apk">
   <img src="https://img.shields.io/badge/📲%20Download%20APK%20(v1.0.0)-Direct%20Install-4285F4?style=for-the-badge&logo=android&logoColor=white" height="42" alt="Download APK" />
 </a>
 
@@ -26,21 +26,21 @@
 
 ---
 
-## 🌟 What is PocketDev Mobile?
+## 🌟 What is PocketIDE?
 
-**PocketDev Mobile** transforms any Android smartphone into an autonomous software development workstation. Powered by Google Gemini 3.5 Flash Lite, it delivers sub-2.5s AI code generation, a full-featured mobile code editor, an instant web preview sandbox, and optional Linux terminal tool execution.
+**PocketIDE** transforms any Android smartphone into an autonomous software development workstation. Powered by Google Gemini 3.5 Flash Lite, it delivers sub-2.5s AI code generation, a full-featured mobile code editor, an instant web preview sandbox, and optional Linux terminal tool execution.
 
-Whether you want to sketch an HTML5 game on the bus, debug a Python script from your couch, or float an AI companion over Termux, PocketDev Mobile is built for pocket productivity.
+Whether you want to sketch an HTML5 game on the bus, debug a Python script from your couch, or float an AI companion over Termux, PocketIDE is built for pocket productivity.
 
 ---
 
 ## 🚀 Choose Your Mode
 
-PocketDev Mobile is engineered with a **Tri-Mode Flexible Architecture**. You can run it in three distinct ways:
+PocketIDE is engineered with a **Tri-Mode Flexible Architecture**. You can run it in three distinct ways:
 
 ```mermaid
 flowchart TD
-    App["📱 PocketDev Mobile App"] --> Check{"Server detected on localhost:8000?"}
+    App["📱 PocketIDE App"] --> Check{"Server detected on localhost:8000?"}
     Check -- "Yes: Connected to PC" --> ModeC["🌌 Mode 3: Antigravity Desktop Bridge<br/>• Full Desktop Workstation Compute & Repos<br/>• Zero-Lag ADB USB Tunnel or Local Wi-Fi<br/>• Autonomous Multi-File Edits & Shell"]
     Check -- "Yes: On-Phone Termux" --> ModeB["🐧 Mode 2: Termux Linux Agent Engine<br/>• Real Bash Tool Calling (run_shell)<br/>• Real Android Disk I/O & Git Checkpoints<br/>• Hardware Telemetry (termux-api)"]
     Check -- "No (Default)" --> ModeA["⚡ Mode 1: Instant Standalone IDE<br/>• Direct Gemini 3.5 Flash Lite API<br/>• Fullscreen Mobile Code Editor<br/>• Live Web Preview Sandbox Runner<br/>• Virtual On-Device Workspace"]
@@ -68,7 +68,7 @@ flowchart TD
 
 ## 🎙️ Voice-Driven Coding & Floating Companion (PiP)
 
-PocketDev Mobile is designed for fluid, hands-free coding:
+PocketIDE is designed for fluid, hands-free coding:
 
 - **Animated Audio Waveform HUD:** Tap the mic button to open the glowing concentric-ring audio HUD with live speech transcription.
 - **Smart Voice Developer Commands:** Speak common development actions directly:
@@ -79,16 +79,16 @@ PocketDev Mobile is designed for fluid, hands-free coding:
   - `"Live preview"` &rarr; Instantly launches the web preview sandbox.
   - `"Clear chat"` &rarr; Resets conversation history.
 - **Spoken Audio Responses (TTS `🔊`):** Toggle speech audio to hear crisp 1-sentence summaries of what the AI built or executed.
-- **⧉ Picture-in-Picture Floating Companion:** Tap the PiP button in the header (or swipe up to home) to shrink PocketDev into a compact floating companion window that stays on top of Termux, Chrome, or any other app.
+- **⧉ Picture-in-Picture Floating Companion:** Tap the PiP button in the header (or swipe up to home) to shrink PocketIDE into a compact floating companion window that stays on top of Termux, Chrome, or any other app.
 
 ---
 
 ## 📥 Quick Start Guide
 
 ### Step 1: Install the Android App
-1. Download **[PocketDev.apk](https://github.com/manansheth296-tech/Antigravity-Mobile/releases/download/v1.0.0/PocketDev.apk)** to your Android phone.
+1. Download **[PocketIDE.apk](https://github.com/manansheth296-tech/Antigravity-Mobile/releases/download/v1.0.0/PocketIDE.apk)** to your Android phone.
 2. Open the downloaded file and select **Install** (allow *Install from Unknown Sources* if prompted).
-3. Open **PocketDev** from your app drawer.
+3. Open **PocketIDE** from your app drawer.
 
 ### Step 2: Activate Free AI Key (30 Seconds)
 1. Get a free Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey) (generous free daily quota, no credit card required).
@@ -110,15 +110,15 @@ If you want the AI to run real bash commands and edit disk files on Android:
    ```
 3. Start the agent daemon:
    ```bash
-   cd ~/pocketdev && ./start_termux.sh
+   cd ~/pocketide && ./start_termux.sh
    ```
-4. Re-open **PocketDev Mobile**. The app will detect the server and show **`● Termux (3.5-flash-lite)`**!
+4. Re-open **PocketIDE**. The app will detect the server and show **`● Termux (3.5-flash-lite)`**!
 
 ---
 
 ## 🌌 Connecting to Google Antigravity (Desktop Hub & Workstation Bridge)
 
-PocketDev Mobile acts as a dedicated mobile companion for your primary workstation running **Google Antigravity** (or any desktop IDE). When connected, you can browse desktop projects, run autonomous tool calling against your PC's disk, and code from your phone while your PC handles heavy compute:
+PocketIDE acts as a dedicated mobile companion for your primary workstation running **Google Antigravity** (or any desktop IDE). When connected, you can browse desktop projects, run autonomous tool calling against your PC's disk, and code from your phone while your PC handles heavy compute:
 
 ### Connection Method 1: USB Cable (ADB Reverse Tunnel — Recommended)
 This gives you zero-latency, reliable connectivity with no Wi-Fi network dependency:
@@ -133,7 +133,7 @@ This gives you zero-latency, reliable connectivity with no Wi-Fi network depende
    adb reverse tcp:8000 tcp:8000
    ```
    *(Or run the included daemon `python backend/adb_tunnel.py` to keep the connection automatically alive).*
-4. Open **PocketDev Mobile** on your phone. The app will immediately link with your PC's workspace and display `● Termux (3.5-flash-lite)` (or `● Desktop Bridge`), giving you live access to all your PC workspace files!
+4. Open **PocketIDE** on your phone. The app will immediately link with your PC's workspace and display `● Termux (3.5-flash-lite)` (or `● Desktop Bridge`), giving you live access to all your PC workspace files!
 
 ### Connection Method 2: Local Wi-Fi Network / Tailscale VPN
 If you want to walk around your house or office completely wireless:
@@ -143,17 +143,17 @@ If you want to walk around your house or office completely wireless:
    python run.py
    ```
 2. Note your PC's local network IP address (e.g. `192.168.1.50`) or Tailscale IP.
-3. In PocketDev Mobile, enter your workstation address (e.g. `http://192.168.1.50:8000`) in settings.
+3. In PocketIDE, enter your workstation address (e.g. `http://192.168.1.50:8000`) in settings.
 
 ### Switching Workspaces on Your PC
-By default, the server serves the current directory. You can expose any project folder on your PC to your phone by setting the `POCKETDEV_WORKSPACE` environment variable:
+By default, the server serves the current directory. You can expose any project folder on your PC to your phone by setting the `POCKETIDE_WORKSPACE` environment variable:
 ```bash
 # Windows PowerShell
-$env:POCKETDEV_WORKSPACE = "D:\Projects\MyWebApp"
+$env:POCKETIDE_WORKSPACE = "M:\Dev"
 python run.py
 
 # Linux / macOS
-export POCKETDEV_WORKSPACE="/home/user/projects/MyWebApp"
+export POCKETIDE_WORKSPACE="/path/to/projects"
 python run.py
 ```
 
@@ -161,7 +161,7 @@ python run.py
 
 ## 🎨 Starter Project Templates Gallery
 
-PocketDev Mobile includes 1-click scaffolding templates pre-configured for mobile development:
+PocketIDE includes 1-click scaffolding templates pre-configured for mobile development:
 
 | Template | Description | Technology |
 |---|---|---|
@@ -175,7 +175,7 @@ PocketDev Mobile includes 1-click scaffolding templates pre-configured for mobil
 
 ## 📱 Hardware & OS Compatibility
 
-PocketDev Mobile is verified and optimized for a wide range of Android hardware:
+PocketIDE is verified and optimized for a wide range of Android hardware:
 
 - **Operating System:** Android 8.0 (Oreo, API 26) through Android 14+ (API 34+).
 - **Tested Devices:**

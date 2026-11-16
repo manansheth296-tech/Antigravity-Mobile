@@ -1,2 +1,2 @@
-# PocketDev Mobile
+# PocketIDE
 # Pure Python architecture. Zero C/Rust compiled packages required.

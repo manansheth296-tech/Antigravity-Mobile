@@ -1,1 +1,1 @@
-# Proguard rules for PocketDev Mobile
+# Proguard rules for PocketIDE

@@ -1,4 +1,4 @@
-name: Build PocketDev Mobile APK
+name: Build PocketIDE Mobile APK
 
 on:
   push:
@@ -61,7 +61,7 @@ jobs:
           fi
           echo "Found APK at: $APK_PATH"
           mkdir -p apk_output
-          cp "$APK_PATH" apk_output/PocketDev.apk
+          cp "$APK_PATH" apk_output/PocketIDE.apk
 
       - name: Upload Build Log on Failure
         if: always()
@@ -73,17 +73,17 @@ jobs:
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: PocketDev-APK
-          path: apk_output/PocketDev.apk
+          name: PocketIDE-APK
+          path: apk_output/PocketIDE.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         with:
           files: |
-            apk_output/PocketDev.apk
+            apk_output/PocketIDE.apk
           tag_name: v1.0.0
-          name: "PocketDev Mobile v1.0.0"
-          body: "Direct native APK install for PocketDev Mobile on Android."
+          name: "PocketIDE Mobile v1.0.0"
+          body: "Direct native APK install for PocketIDE on Android."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

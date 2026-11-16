@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea or capability for PocketDev Mobile
+about: Suggest an idea or capability for PocketIDE
 title: '[FEAT] '
 labels: enhancement
 assignees: ''
