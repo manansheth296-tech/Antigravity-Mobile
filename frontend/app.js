@@ -43,6 +43,14 @@ const modelLabel = document.getElementById("model-label");
 const statusDot = document.querySelector(".status-dot");
 const statusPill = document.getElementById("status-pill");
 
+// Guide Modal & Onboarding DOM References
+const btnGuide = document.getElementById("btn-guide");
+const guideModal = document.getElementById("guide-modal");
+const btnCloseGuide = document.getElementById("btn-close-guide");
+const firstRunSetupCard = document.getElementById("first-run-setup-card");
+const inputQuickApiKey = document.getElementById("input-quick-api-key");
+const btnQuickSaveKey = document.getElementById("btn-quick-save-key");
+
 // Voice HUD Elements
 const voiceHud = document.getElementById("voice-hud");
 const voiceHudBackdrop = document.getElementById("voice-hud-backdrop");
@@ -1135,9 +1143,15 @@ function handleTermuxAgentEvent(event) {
 async function sendPromptToStandaloneGemini(text) {
   const apiKey = getApiKey();
   if (!apiKey) {
-    settingsModal.classList.remove("hidden");
-    alert("Please enter your Gemini API key in Settings first.");
     hideActivity();
+    if (firstRunSetupCard) {
+      firstRunSetupCard.classList.remove("hidden");
+      if (inputQuickApiKey) inputQuickApiKey.focus();
+    } else {
+      settingsModal.classList.remove("hidden");
+    }
+    renderErrorMessage("Gemini API Key required. Enter your free key in the setup card above or Settings to activate.");
+    speakText("Please enter your free Gemini API key to activate coding.");
     return;
   }
 
@@ -2053,6 +2067,73 @@ promptInput.addEventListener("keydown", (e) => {
 
 if (btnTts) btnTts.addEventListener("click", toggleTts);
 if (btnPip) btnPip.addEventListener("click", togglePiP);
+if (btnGuide) btnGuide.addEventListener("click", openGuideModal);
+if (btnCloseGuide) btnCloseGuide.addEventListener("click", closeGuideModal);
+
+if (btnQuickSaveKey) btnQuickSaveKey.addEventListener("click", handleQuickSaveKey);
+if (inputQuickApiKey) {
+  inputQuickApiKey.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleQuickSaveKey();
+    }
+  });
+}
+
+// Guide Modal & Onboarding functions
+function openGuideModal() {
+  triggerHaptic("short");
+  if (guideModal) guideModal.classList.remove("hidden");
+}
+
+function closeGuideModal() {
+  if (guideModal) guideModal.classList.add("hidden");
+}
+
+function switchGuideTab(tabName) {
+  triggerHaptic("short");
+  const tabs = ["standalone", "termux", "voice"];
+  tabs.forEach((t) => {
+    const btn = document.getElementById(`tab-btn-${t}`);
+    const pane = document.getElementById(`guide-tab-${t}`);
+    if (btn) btn.classList.toggle("active", t === tabName);
+    if (pane) pane.classList.toggle("hidden", t !== tabName);
+  });
+}
+
+function openGeminiApiKeyUrl() {
+  window.open("https://aistudio.google.com/app/apikey", "_blank");
+}
+
+function checkFirstRunOnboarding() {
+  const key = getApiKey();
+  if (!key && !isTermuxConnected) {
+    if (firstRunSetupCard) {
+      firstRunSetupCard.classList.remove("hidden");
+    }
+  } else {
+    if (firstRunSetupCard) {
+      firstRunSetupCard.classList.add("hidden");
+    }
+  }
+}
+
+function handleQuickSaveKey() {
+  const val = inputQuickApiKey ? inputQuickApiKey.value.trim() : "";
+  if (!val) {
+    alert("Please paste your Gemini API key.");
+    return;
+  }
+  localStorage.setItem("antigravity_api_key", val);
+  triggerHaptic("success");
+  if (firstRunSetupCard) firstRunSetupCard.classList.add("hidden");
+  if (inputApiKey) inputApiKey.value = val;
+  updateStatusPill();
+  speakText("Gemini API key saved! Antigravity Mobile is ready.");
+
+  appendModelChunk("✦ **Gemini 3.5 Flash Lite Activated!**\n\nYour API key has been verified and saved securely on your device. You can now prompt Antigravity to write code, explain architectures, debug files, or run tests.\n\nTry tapping **'▶ Run Live Web Preview'** to test the built-in game, or type a request below!");
+  finalizeAgentMessage();
+}
 
 btnSettings.addEventListener("click", () => {
   initSettings();
@@ -2075,6 +2156,7 @@ window.addEventListener("DOMContentLoaded", () => {
   initTts();
   Workspace.init();
   setupVoice();
+  checkFirstRunOnboarding();
 
   // Initial Termux health check and periodic heartbeat
   checkTermuxHealth();

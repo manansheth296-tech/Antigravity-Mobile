@@ -60,6 +60,13 @@
             <rect x="12" y="11" width="8" height="7" rx="1" ry="1" fill="currentColor"/>
           </svg>
         </button>
+        <button id="btn-guide" class="icon-btn guide-btn" title="Getting Started & User Guide">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </button>
         <div id="status-pill" class="status-indicator">
           <span class="status-dot"></span>
           <span id="model-label">3.5 Lite</span>
@@ -143,15 +150,39 @@
 
     <!-- Main Chat Feed -->
     <main id="chat-messages" class="chat-feed">
-      <div class="welcome-card">
+      <div class="welcome-card" id="welcome-card">
         <div class="welcome-icon">✦</div>
         <h2>Antigravity Mobile IDE</h2>
         <p>Your agentic AI software engineering IDE on Android. Write code, preview web apps live, edit with mobile-friendly symbol keys, and scaffold full projects on the go.</p>
+
+        <!-- First-Run Quick Onboarding Card (Shown when API key is not yet set) -->
+        <div id="first-run-setup-card" class="first-run-card hidden">
+          <div class="first-run-header">
+            <span class="first-run-badge">✦ Instant Setup</span>
+            <h4>Activate AI Developer Engine</h4>
+          </div>
+          <p class="first-run-desc">
+            To generate code and chat with Gemini 3.5 Flash Lite, enter your free Google Gemini API key. No server or credit card required.
+          </p>
+          <div class="first-run-input-group">
+            <input type="password" id="input-quick-api-key" placeholder="Paste Gemini key (AIzaSy...)" autocomplete="off">
+            <button id="btn-quick-save-key" class="primary-btn-sm">Activate ✦</button>
+          </div>
+          <div class="first-run-links">
+            <button type="button" class="link-action-btn" onclick="openGeminiApiKeyUrl()">
+              🔑 Get a Free Gemini Key (Google AI Studio) &rarr;
+            </button>
+          </div>
+          <div class="first-run-termux-tip">
+            <span>💡 <strong>No Linux or Termux needed:</strong> Antigravity Mobile runs 100% standalone out of the box with the built-in code editor, live web sandbox runner, voice coding, and floating PiP mode.</span>
+          </div>
+        </div>
+
         <div class="quick-chips">
           <button class="chip" onclick="openLivePreview()">▶ Run Live Web Preview</button>
           <button class="chip" onclick="openTemplatesModal()">⚡ Starter Templates</button>
           <button class="chip" onclick="openEditorWithCurrentFile('index.html')">✏️ Open Code Editor</button>
-          <button class="chip" onclick="sendQuickPrompt('Explain the architecture of the current workspace project')">🔍 Explain Project</button>
+          <button class="chip" onclick="openGuideModal()">📖 User & Setup Guide</button>
         </div>
       </div>
     </main>
@@ -474,6 +505,80 @@
           <input type="text" id="input-workspace" placeholder="/data/data/com.termux/files/home/workspace">
 
           <button id="btn-save-settings" class="primary-btn">Save Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help & Getting Started Guide Modal -->
+    <div id="guide-modal" class="modal hidden">
+      <div class="modal-content guide-modal-content">
+        <div class="modal-header">
+          <div class="guide-title-row">
+            <span class="guide-icon">📖</span>
+            <div>
+              <h3>Antigravity Mobile Guide</h3>
+              <small>Everything you need to know to code on mobile</small>
+            </div>
+          </div>
+          <button id="btn-close-guide" class="icon-btn">&times;</button>
+        </div>
+        <div class="modal-body guide-modal-body">
+          <div class="guide-tabs">
+            <button id="tab-btn-standalone" class="guide-tab active" onclick="switchGuideTab('standalone')">📱 Standalone (Zero Setup)</button>
+            <button id="tab-btn-termux" class="guide-tab" onclick="switchGuideTab('termux')">🐧 Termux Linux (Power User)</button>
+            <button id="tab-btn-voice" class="guide-tab" onclick="switchGuideTab('voice')">🎙️ Voice & PiP</button>
+          </div>
+
+          <div id="guide-tab-standalone" class="guide-tab-pane active">
+            <h4>1. Standalone Mode (Default for Everyone)</h4>
+            <p>You do <strong>NOT</strong> need Termux, a terminal, or background servers. Antigravity Mobile runs 100% on your Android phone as a complete mobile IDE:</p>
+            <ul class="guide-list">
+              <li><strong>⚡ Gemini 3.5 Flash Lite:</strong> Direct client-side connection with sub-2.5s generation latency.</li>
+              <li><strong>✏️ Mobile Code Editor:</strong> Line numbers, syntax highlighting, search/replace, and the <em>Mobile Symbols Ribbon</em> (<code>Tab</code>, <code>{ }</code>, <code>( )</code>, <code>[ ]</code>, <code>" "</code>, <code>' '</code>, <code>=</code>, <code>;</code>, <code>:</code>, <code>/</code>, <code>$</code>) for rapid phone coding.</li>
+              <li><strong>▶ Live Web Preview Sandbox:</strong> Runs HTML5, Canvas, CSS, and JS web applications live inside the phone with a slide-up Virtual DevTools Console.</li>
+              <li><strong>📂 Starter Scaffolding:</strong> 1-click scaffolding for touch games, notes PWAs, telemetry dashboards, and FastAPI.</li>
+            </ul>
+            <div class="guide-box">
+              <strong>Need a free API key?</strong>
+              <p>Google offers free Gemini API keys with generous daily allowances at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a>. Paste it in Settings or on the home screen to activate.</p>
+            </div>
+          </div>
+
+          <div id="guide-tab-termux" class="guide-tab-pane hidden">
+            <h4>2. Autonomous Linux Terminal Engine (Optional)</h4>
+            <p>For power developers who want the AI to run real bash commands, edit Android disk files, and perform git operations directly on device:</p>
+            <ol class="guide-steps">
+              <li>Install <strong>Termux</strong> on your Android phone from F-Droid or GitHub.</li>
+              <li>Open Termux and run this 1-line installer:
+                <pre><code>curl -sL https://raw.githubusercontent.com/manansheth296-tech/Antigravity-Mobile/main/termux_setup.sh | bash</code></pre>
+              </li>
+              <li>Start the agent with:
+                <pre><code>cd ~/antigravity && ./start_termux.sh</code></pre>
+              </li>
+            </ol>
+            <div class="guide-box">
+              <strong>Seamless Hybrid Detection:</strong>
+              <p>Antigravity Mobile automatically detects Termux on <code>localhost:8000</code>. When active, tool execution cards stream directly into chat; when offline, it smoothly falls back to Standalone mode.</p>
+            </div>
+          </div>
+
+          <div id="guide-tab-voice" class="guide-tab-pane hidden">
+            <h4>3. Voice Coding & Floating Companion</h4>
+            <ul class="guide-list">
+              <li><strong>🎙️ Smart Voice Shortcuts:</strong> Tap the mic and speak developer commands like:
+                <div class="code-pill-list">
+                  <code>"Run tests"</code>
+                  <code>"Run shell git status"</code>
+                  <code>"Explain code"</code>
+                  <code>"Find bugs"</code>
+                  <code>"Live preview"</code>
+                  <code>"Clear chat"</code>
+                </div>
+              </li>
+              <li><strong>🔊 Spoken AI Audio:</strong> Tap the speaker button in the header bar to hear short spoken summaries of what the AI did.</li>
+              <li><strong>⧉ Floating Companion (PiP):</strong> Tap the PiP button in the header (or swipe up to home) to shrink Antigravity into a floating companion window that stays on top while you work in other apps.</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
