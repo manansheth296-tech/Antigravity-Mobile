@@ -34,9 +34,10 @@ PocketDev Mobile is a mobile-first agentic AI IDE and companion application for 
 - **Requirements:** 100% standard library (zero C/Rust compiled packages, fully compatible with 32-bit ARM Android).
 - **Scripts:** `termux_setup.sh` (1-command installer) and `start_termux.sh` (background daemon launcher).
 
-### Mode 3: Desktop Hub & Context Bridge (Phase 2)
-- Main PC workstation serves as the central heavy-compute and repository hub.
-- Local network / Tailscale sync between mobile device and desktop.
+### Mode 3: Desktop Hub & Antigravity IDE Bridge — [ACTIVE & INTEGRATED]
+- **Workstation Companion:** Connects directly to your PC running Google Antigravity or PocketDev server via USB (`python backend/adb_tunnel.py`), Wi-Fi (`http://<pc-ip>:8000`), or Tailscale.
+- **Capabilities:** Remote shell execution on PC workstation, desktop repo code editing, automated test execution, and real-time tool execution streaming cards to phone.
+- **Security & Privacy:** 100% Zero-Honeypot, zero-telemetry architecture. Documented in `SECURITY.md`. All Gemini API calls go directly to Google's official endpoints.
 
 ---
 

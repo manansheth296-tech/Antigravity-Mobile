@@ -525,6 +525,7 @@
         <div class="modal-body guide-modal-body">
           <div class="guide-tabs">
             <button id="tab-btn-standalone" class="guide-tab active" onclick="switchGuideTab('standalone')">📱 Standalone (Zero Setup)</button>
+            <button id="tab-btn-antigravity" class="guide-tab" onclick="switchGuideTab('antigravity')">💻 Antigravity PC Bridge</button>
             <button id="tab-btn-termux" class="guide-tab" onclick="switchGuideTab('termux')">🐧 Termux Linux (Power User)</button>
             <button id="tab-btn-voice" class="guide-tab" onclick="switchGuideTab('voice')">🎙️ Voice & PiP</button>
           </div>
@@ -541,6 +542,27 @@
             <div class="guide-box">
               <strong>Need a free API key?</strong>
               <p>Google offers free Gemini API keys with generous daily allowances at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a>. Paste it in Settings or on the home screen to activate.</p>
+            </div>
+          </div>
+
+          <div id="guide-tab-antigravity" class="guide-tab-pane hidden">
+            <h4>2. Connect to Google Antigravity & PC Workstations</h4>
+            <p><strong>Yes, you can connect PocketDev directly to your PC's Google Antigravity IDE workspace!</strong> PocketDev acts as a handheld mobile terminal, code inspector, and voice-assisted agent companion for your PC.</p>
+            <ul class="guide-list">
+              <li><strong>⚡ Option A: USB Cable (Instant ADB Tunnel)</strong>
+                <p>Connect phone via USB and run on PC: <code>adb reverse tcp:8000 tcp:8000</code>. PocketDev connects to your PC agent at <code>http://localhost:8000</code> immediately.</p>
+              </li>
+              <li><strong>📶 Option B: Wi-Fi / Local Network</strong>
+                <p>On your PC, launch <code>python run.py</code>. In PocketDev Settings, set Server URL to <code>http://&lt;your-pc-lan-ip&gt;:8000</code>.</p>
+              </li>
+              <li><strong>🌐 Option C: Tailscale / VPN</strong>
+                <p>Set Server URL to your PC's Tailscale IP to access your Antigravity desktop repo anywhere over mobile data.</p>
+              </li>
+              <li><strong>✨ Handheld Superpowers:</strong> Trigger tests, commit git checkpoints, and inspect desktop code files while moving away from your desk.</li>
+            </ul>
+            <div class="guide-box">
+              <strong>🔒 Zero Honeypot Guarantee:</strong>
+              <p>PocketDev has zero third-party telemetry, tracking, or proxy relays. In Standalone Mode, API calls go directly to Google's official Gemini endpoint. In Desktop/Termux mode, communication is restricted to your local private network.</p>
             </div>
           </div>
 

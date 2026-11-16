@@ -2099,7 +2099,7 @@ function closeGuideModal() {
 
 function switchGuideTab(tabName) {
   triggerHaptic("short");
-  const tabs = ["standalone", "termux", "voice"];
+  const tabs = ["standalone", "antigravity", "termux", "voice"];
   tabs.forEach((t) => {
     const btn = document.getElementById(`tab-btn-${t}`);
     const pane = document.getElementById(`guide-tab-${t}`);
