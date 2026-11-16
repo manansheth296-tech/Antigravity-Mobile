@@ -7,14 +7,15 @@ Antigravity Mobile is a mobile-first agentic AI IDE and companion application fo
 
 ## 2. Core Architecture & Operation Modes
 
-### Mode 1: Standalone Android App (APK)
-- **Engine:** Direct client-side HTTPS connection to Google Gemini API (`gemini-3.8-flash`).
-- **No Background Server Required:** Runs directly as an installed Android app on the phone.
+### Mode 1: Standalone Android App (APK) — [ACTIVE & DEPLOYED]
+- **Engine:** Direct client-side HTTPS connection to Google Gemini API (`gemini-3.5-flash-lite`).
+- **No Background Server Required:** Runs directly as an installed Android app (`com.antigravity.mobile.debug`) on the phone.
 - **Features:**
-  - Antigravity Obsidian Dark design language with Gemini gradients.
+  - Antigravity Obsidian Dark design language with Gemini accents.
   - Native microphone integration for voice coding prompts.
-  - On-device API key and conversation history persistence.
+  - On-device API key and conversation history persistence (`localStorage`).
   - Automated cloud compilation via GitHub Actions (`.github/workflows/build-apk.yml`).
+  - Direct installation via ADB or GitHub Releases: `https://github.com/manansheth296-tech/Antigravity-Mobile/releases/tag/v1.0.0`.
 
 ### Mode 2: Termux Linux Agent Environment (Full Terminal Shell Engine)
 - **Engine:** Pure Python multithreaded server (`run.py`, `backend/server.py`, `backend/gemini_client.py`).
@@ -28,16 +29,18 @@ Antigravity Mobile is a mobile-first agentic AI IDE and companion application fo
 ---
 
 ## 3. Hardware Profile
-* **Primary Target:** Samsung Galaxy F13
+* **Primary Target:** Samsung Galaxy F13 (`SM-E135F`)
   * **Storage:** 128 GB
   * **OS:** Android 14 (One UI Core 6.1)
   * **Userspace ABI:** 32-bit (`armeabi-v7a`)
   * **Battery:** 6,000 mAh
+  * **ADB Serial:** `RZ8W405CPNY`
 * **Secondary Targets:** Samsung Galaxy M02s (64GB), Xiaomi / Redmi.
 
 ---
 
 ## 4. Current Status & Active Model
-* **Active LLM Target:** `gemini-3.8-flash` (updated from retired 2.5-flash).
+* **Active LLM Target:** `gemini-3.5-flash-lite` (Lightning-fast 2-second response latency; replaced deprecated 2.5 and slow 3.8 thinking preview).
 * **Android Native Source:** Located in `android/`.
 * **Automated APK Builder:** Configured in `.github/workflows/build-apk.yml`.
+* **GitHub Repository:** `https://github.com/manansheth296-tech/Antigravity-Mobile.git`.
