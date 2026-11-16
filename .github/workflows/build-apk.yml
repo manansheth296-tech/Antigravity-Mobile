@@ -62,7 +62,6 @@ jobs:
           echo "Found APK at: $APK_PATH"
           mkdir -p apk_output
           cp "$APK_PATH" apk_output/PocketDev.apk
-          cp "$APK_PATH" apk_output/AntigravityMobile.apk
 
       - name: Upload Build Log on Failure
         if: always()
@@ -83,7 +82,6 @@ jobs:
         with:
           files: |
             apk_output/PocketDev.apk
-            apk_output/AntigravityMobile.apk
           tag_name: v1.0.0
           name: "PocketDev Mobile v1.0.0"
           body: "Direct native APK install for PocketDev Mobile on Android."

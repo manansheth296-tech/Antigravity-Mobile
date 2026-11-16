@@ -1,1 +1,1 @@
-# Proguard rules for Antigravity Mobile
+# Proguard rules for PocketDev Mobile

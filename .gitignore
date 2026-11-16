@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 *.env
 .antigravity_config.json
+.pocketdev_config.json
 
 # Temporary packages
 *.zip

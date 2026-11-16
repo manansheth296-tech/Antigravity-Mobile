@@ -1,2 +1,2 @@
-# Antigravity Mobile
+# PocketDev Mobile
 # Pure Python architecture. Zero C/Rust compiled packages required.

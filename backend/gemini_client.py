@@ -168,7 +168,7 @@ class PureGeminiAgent:
         data_bytes = json.dumps(payload).encode("utf-8")
         headers = {
             "Content-Type": "application/json",
-            "User-Agent": "AntigravityMobile/1.0"
+            "User-Agent": "PocketDevMobile/1.0"
         }
 
         req = urllib.request.Request(
