@@ -47,6 +47,19 @@
             <rect x="3" y="14" width="7" height="7"/>
           </svg>
         </button>
+        <button id="btn-tts" class="icon-btn tts-btn" title="Toggle Spoken Responses (TTS)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path class="tts-wave-1" d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            <path class="tts-wave-2" d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          </svg>
+        </button>
+        <button id="btn-pip" class="icon-btn pip-btn" title="Floating Companion (Picture-in-Picture)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="4" width="20" height="16" rx="2" ry="2"/>
+            <rect x="12" y="11" width="8" height="7" rx="1" ry="1" fill="currentColor"/>
+          </svg>
+        </button>
         <div id="status-pill" class="status-indicator">
           <span class="status-dot"></span>
           <span id="model-label">3.5 Lite</span>
@@ -87,6 +100,46 @@
       </div>
     </div>
     <div id="drawer-overlay" class="drawer-overlay"></div>
+
+    <!-- Voice-Driven Coding HUD Overlay -->
+    <div id="voice-hud" class="voice-hud hidden">
+      <div class="voice-hud-backdrop" id="voice-hud-backdrop"></div>
+      <div class="voice-hud-card">
+        <div class="voice-hud-header">
+          <span class="voice-hud-pill">● LISTENING</span>
+          <button id="btn-voice-hud-close" class="icon-btn-sm" title="Close">&times;</button>
+        </div>
+        <div class="voice-pulse-wrapper">
+          <div class="pulse-ring ring-1"></div>
+          <div class="pulse-ring ring-2"></div>
+          <div class="pulse-ring ring-3"></div>
+          <div class="voice-mic-core">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+              <path d="M19 10v2a7 7 0 01-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+          </div>
+        </div>
+        <div id="voice-cmd-badge" class="voice-cmd-badge hidden">⚡ Command: <span id="voice-cmd-name"></span></div>
+        <div id="voice-transcript-display" class="voice-transcript-display">Listening... Speak a coding instruction or command</div>
+        <div class="voice-hud-actions">
+          <button id="btn-voice-cancel" class="action-btn-sm secondary">Cancel</button>
+          <button id="btn-voice-submit" class="action-btn-sm primary">Send Prompt ↵</button>
+        </div>
+        <div class="voice-quick-hints">
+          <span class="hints-label">Voice Shortcuts:</span>
+          <div class="hints-tags">
+            <code>"Run tests"</code>
+            <code>"Run shell git status"</code>
+            <code>"Explain code"</code>
+            <code>"Find bugs"</code>
+            <code>"Live preview"</code>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Main Chat Feed -->
     <main id="chat-messages" class="chat-feed">

@@ -1324,3 +1324,340 @@ body {
   font-size: 0.74rem;
   color: var(--text-secondary);
 }
+
+/* ==========================================
+   OPTION 4: VOICE CODING HUD & PIP COMPANION
+   ========================================== */
+
+/* Header controls: TTS & PiP */
+.tts-btn, .pip-btn {
+  color: var(--text-secondary);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tts-btn.active {
+  color: var(--accent-green);
+  background: rgba(52, 168, 83, 0.15);
+  border-color: rgba(52, 168, 83, 0.35);
+}
+
+.tts-btn:not(.active) .tts-wave-1,
+.tts-btn:not(.active) .tts-wave-2 {
+  opacity: 0.25;
+}
+
+.pip-btn:active, .tts-btn:active {
+  transform: scale(0.92);
+}
+
+/* Voice HUD Overlay */
+.voice-hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 120;
+  padding: 20px;
+}
+
+.voice-hud.hidden {
+  display: none !important;
+}
+
+.voice-hud-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(10, 12, 16, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.voice-hud-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 360px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-glow);
+  border-radius: 20px;
+  padding: 24px 20px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 24px rgba(66, 133, 244, 0.2);
+  animation: hudScaleIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes hudScaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.voice-hud-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.voice-hud-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent-red);
+  background: rgba(234, 67, 53, 0.15);
+  border: 1px solid rgba(234, 67, 53, 0.3);
+  padding: 3px 10px;
+  border-radius: 12px;
+  animation: pulsePill 1.2s infinite ease-in-out;
+}
+
+@keyframes pulsePill {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.icon-btn-sm {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+/* Pulsing Microphone Core */
+.voice-pulse-wrapper {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 8px 0 16px 0;
+}
+
+.voice-mic-core {
+  position: relative;
+  z-index: 5;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4285f4, #9b72cf);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(66, 133, 244, 0.45);
+}
+
+.pulse-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid rgba(66, 133, 244, 0.5);
+  pointer-events: none;
+}
+
+.ring-1 {
+  width: 76px;
+  height: 76px;
+  animation: rippleRing 1.8s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.ring-2 {
+  width: 92px;
+  height: 92px;
+  animation: rippleRing 1.8s infinite 0.6s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.ring-3 {
+  width: 108px;
+  height: 108px;
+  animation: rippleRing 1.8s infinite 1.2s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+@keyframes rippleRing {
+  0% { transform: translate(-50%, -50%) scale(0.7); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(1.35); opacity: 0; }
+}
+
+.voice-cmd-badge {
+  background: rgba(155, 114, 207, 0.2);
+  border: 1px solid rgba(155, 114, 207, 0.5);
+  color: #d1b4ff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.voice-cmd-badge.hidden {
+  display: none !important;
+}
+
+.voice-transcript-display {
+  font-size: 0.96rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+  min-height: 48px;
+  max-height: 120px;
+  overflow-y: auto;
+  margin-bottom: 18px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  width: 100%;
+  text-align: left;
+  user-select: text;
+  word-break: break-word;
+}
+
+.voice-hud-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.voice-hud-actions .action-btn-sm {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 0.86rem;
+  border-radius: 10px;
+}
+
+.voice-quick-hints {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.voice-quick-hints .hints-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+}
+
+.voice-quick-hints code {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  color: var(--text-secondary);
+}
+
+/* ==========================================
+   PICTURE-IN-PICTURE (PIP) FLOATING COMPANION MODE
+   ========================================== */
+body.pip-mode {
+  background: #0a0c10 !important;
+}
+
+body.pip-mode .app-container {
+  height: 100vh;
+  max-width: 100%;
+  padding: 0;
+}
+
+body.pip-mode .app-header .header-left,
+body.pip-mode .app-header #btn-open-preview,
+body.pip-mode .app-header #btn-open-templates,
+body.pip-mode .app-header #btn-settings,
+body.pip-mode .app-header #btn-pip,
+body.pip-mode .file-drawer,
+body.pip-mode .drawer-overlay,
+body.pip-mode .quick-action-ribbon,
+body.pip-mode #editor-modal,
+body.pip-mode #preview-modal,
+body.pip-mode #templates-modal,
+body.pip-mode #settings-modal,
+body.pip-mode .welcome-card {
+  display: none !important;
+}
+
+body.pip-mode .app-header {
+  padding: 6px 10px;
+  min-height: 38px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+body.pip-mode .header-right {
+  width: 100%;
+  justify-content: space-between;
+}
+
+body.pip-mode .status-indicator {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+}
+
+body.pip-mode .chat-feed {
+  padding: 8px 10px;
+  gap: 8px;
+}
+
+body.pip-mode .message {
+  margin-bottom: 6px;
+}
+
+body.pip-mode .message-bubble {
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+body.pip-mode .tool-call-card {
+  padding: 8px 10px;
+  margin: 4px 0;
+}
+
+body.pip-mode .tool-header {
+  font-size: 0.76rem;
+}
+
+body.pip-mode .app-input-bar {
+  padding: 6px 10px 8px 10px;
+}
+
+body.pip-mode .input-container {
+  padding: 4px 6px;
+  border-radius: 18px;
+}
+
+body.pip-mode #prompt-input {
+  font-size: 0.82rem;
+  max-height: 60px;
+}
+
+body.pip-mode .icon-btn {
+  width: 32px;
+  height: 32px;
+}
+
+body.pip-mode .send-btn {
+  width: 30px;
+  height: 30px;
+}

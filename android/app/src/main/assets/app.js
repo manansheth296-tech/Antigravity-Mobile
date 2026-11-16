@@ -23,16 +23,35 @@ let isTermuxConnected = false;
 let termuxWorkspacePath = "";
 let serverCheckTimer = null;
 
+// Audio TTS & PiP State
+let isTtsEnabled = localStorage.getItem("antigravity_tts_enabled") === "true";
+let isInPiP = false;
+let currentVoiceTranscript = "";
+let detectedVoiceCommand = null;
+let currentTurnModelText = "";
+
 // --- DOM References ---
 const chatMessages = document.getElementById("chat-messages");
 const promptInput = document.getElementById("prompt-input");
 const btnSend = document.getElementById("btn-send");
 const btnVoice = document.getElementById("btn-voice");
+const btnTts = document.getElementById("btn-tts");
+const btnPip = document.getElementById("btn-pip");
 const activityPill = document.getElementById("live-activity-pill");
 const activityText = document.getElementById("activity-text");
 const modelLabel = document.getElementById("model-label");
 const statusDot = document.querySelector(".status-dot");
 const statusPill = document.getElementById("status-pill");
+
+// Voice HUD Elements
+const voiceHud = document.getElementById("voice-hud");
+const voiceHudBackdrop = document.getElementById("voice-hud-backdrop");
+const btnVoiceHudClose = document.getElementById("btn-voice-hud-close");
+const voiceCmdBadge = document.getElementById("voice-cmd-badge");
+const voiceCmdName = document.getElementById("voice-cmd-name");
+const voiceTranscriptDisplay = document.getElementById("voice-transcript-display");
+const btnVoiceCancel = document.getElementById("btn-voice-cancel");
+const btnVoiceSubmit = document.getElementById("btn-voice-submit");
 
 // Drawer & Workspace Explorer
 const btnToggleFiles = document.getElementById("btn-toggle-files");
@@ -1010,6 +1029,7 @@ async function sendPrompt(customPrompt = null) {
   const text = customPrompt ? customPrompt.trim() : promptInput.value.trim();
   if (!text) return;
 
+  currentTurnModelText = "";
   appendUserMessage(text);
   if (!customPrompt) {
     promptInput.value = "";
@@ -1087,6 +1107,7 @@ function handleTermuxAgentEvent(event) {
       showActivity(event.data);
       break;
     case "chunk":
+      currentTurnModelText += (event.text || "");
       appendModelChunk(event.text);
       break;
     case "tool_call":
@@ -1098,10 +1119,14 @@ function handleTermuxAgentEvent(event) {
     case "error":
       hideActivity();
       renderErrorMessage(event.message);
+      speakText("Error: " + event.message);
       break;
     case "done":
       hideActivity();
       finalizeAgentMessage();
+      if (currentTurnModelText) {
+        speakText(currentTurnModelText);
+      }
       break;
   }
 }
@@ -1165,6 +1190,7 @@ If asked to write or fix code, return complete, runnable, syntax-clean code insi
     if (modelText) {
       appendModelChunk(modelText);
       chatHistory.push(candidate.content);
+      speakText(modelText);
     }
   } catch (err) {
     hideActivity();
@@ -1701,8 +1727,230 @@ btnOpenTemplates.addEventListener("click", openTemplatesModal);
 btnCloseTemplates.addEventListener("click", () => templatesModal.classList.add("hidden"));
 
 // ==========================================
-// 10. VOICE CODING INTEGRATION
+// 10. VOICE-DRIVEN CODING & AUDIO FEEDBACK (OPTION 4)
 // ==========================================
+
+function triggerHaptic(type = "short") {
+  if (window.AndroidBridge && typeof window.AndroidBridge.vibrate === "function") {
+    if (type === "short") window.AndroidBridge.vibrate(35);
+    else if (type === "success") {
+      window.AndroidBridge.vibrate(40);
+      setTimeout(() => window.AndroidBridge.vibrate(40), 90);
+    } else if (type === "alert") {
+      window.AndroidBridge.vibrate(75);
+    }
+    return;
+  }
+  if (navigator.vibrate) {
+    if (type === "short") navigator.vibrate(35);
+    else if (type === "success") navigator.vibrate([40, 60, 40]);
+    else if (type === "alert") navigator.vibrate(75);
+  }
+}
+
+function initTts() {
+  if (isTtsEnabled) {
+    btnTts.classList.add("active");
+    btnTts.title = "Spoken Audio Responses: ON (Tap to Mute)";
+  } else {
+    btnTts.classList.remove("active");
+    btnTts.title = "Spoken Audio Responses: OFF (Tap to Enable)";
+  }
+}
+
+function toggleTts() {
+  isTtsEnabled = !isTtsEnabled;
+  localStorage.setItem("antigravity_tts_enabled", isTtsEnabled ? "true" : "false");
+  initTts();
+  triggerHaptic("short");
+  if (isTtsEnabled) {
+    speakText("Voice audio feedback enabled.");
+  } else {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+  }
+}
+
+function speakText(text) {
+  if (!isTtsEnabled || !window.speechSynthesis) return;
+  try {
+    window.speechSynthesis.cancel();
+
+    // Clean text: strip code blocks, inline code, html, markdown symbols
+    let clean = text
+      .replace(/```[\s\S]*?```/g, "Code block generated.")
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/<[^>]+>/g, "")
+      .replace(/[#*_~>]/g, "")
+      .trim();
+
+    // Extract first 1-2 concise sentences for quick developer audio feedback
+    const sentences = clean.split(/(?<=[.?!])\s+/);
+    const excerpt = sentences.slice(0, 2).join(" ");
+    if (!excerpt) return;
+
+    const utterance = new SpeechSynthesisUtterance(excerpt);
+    utterance.rate = 1.05;
+    utterance.pitch = 1.0;
+    utterance.lang = "en-US";
+    window.speechSynthesis.speak(utterance);
+  } catch (err) {
+    console.warn("TTS speakText failed:", err);
+  }
+}
+
+// Picture-in-Picture (PiP) Floating Companion
+function togglePiP() {
+  triggerHaptic("short");
+  if (window.AndroidBridge && typeof window.AndroidBridge.enterPiP === "function") {
+    window.AndroidBridge.enterPiP();
+  } else {
+    // Fallback toggle for testing outside native shell
+    document.body.classList.toggle("pip-mode");
+    isInPiP = document.body.classList.contains("pip-mode");
+  }
+}
+
+// Global hook invoked directly by MainActivity.java on Android PiP mode transition
+window.onPiPModeChanged = function(inPiP) {
+  isInPiP = inPiP;
+  document.body.classList.toggle("pip-mode", inPiP);
+  if (inPiP) {
+    if (editorModal) editorModal.classList.add("hidden");
+    if (previewModal) previewModal.classList.add("hidden");
+    if (templatesModal) templatesModal.classList.add("hidden");
+    if (settingsModal) settingsModal.classList.add("hidden");
+    if (aiActionSheet) aiActionSheet.classList.add("hidden");
+    if (fileDrawer) fileDrawer.classList.remove("open");
+    if (drawerOverlay) drawerOverlay.classList.remove("active");
+    if (voiceHud) voiceHud.classList.add("hidden");
+    scrollToBottom();
+  }
+};
+
+// Smart Voice Developer Commands Intent Classifier
+function classifyVoiceCommand(transcript) {
+  const lower = transcript.trim().toLowerCase();
+
+  // 1. Run Shell
+  const shellMatch = lower.match(/^(?:run shell|execute|run command|terminal)\s+(.+)$/i);
+  if (shellMatch) {
+    return {
+      type: "shell",
+      label: `Run Shell: ${shellMatch[1]}`,
+      action: () => sendPrompt(`run_shell: ${shellMatch[1]}`)
+    };
+  }
+
+  // 2. Run Tests
+  if (lower.includes("run test") || lower.includes("run tests") || lower.includes("test project") || lower.includes("run unit test")) {
+    return {
+      type: "tests",
+      label: "Run Project Tests",
+      action: () => handleQuickAction("tests")
+    };
+  }
+
+  // 3. Git Status
+  if (lower.includes("git status") || lower.includes("check git") || lower.includes("git diff")) {
+    return {
+      type: "git",
+      label: "Check Git Status",
+      action: () => sendPrompt("Check git status and current branch in the workspace using run_shell.")
+    };
+  }
+
+  // 4. Explain Code
+  if (lower.includes("explain code") || lower.includes("explain this") || lower.includes("explain file") || lower.includes("what does this code do")) {
+    return {
+      type: "explain",
+      label: "Explain Code",
+      action: () => handleQuickAction("explain")
+    };
+  }
+
+  // 5. Find Bugs / Debug
+  if (lower.includes("find bug") || lower.includes("find bugs") || lower.includes("check bugs") || lower.includes("debug this") || lower.includes("debug code")) {
+    return {
+      type: "bugs",
+      label: "Find Bugs & Security Issues",
+      action: () => handleQuickAction("bugs")
+    };
+  }
+
+  // 6. Refactor Code
+  if (lower.includes("refactor code") || lower.includes("clean up code") || lower.includes("refactor this")) {
+    return {
+      type: "refactor",
+      label: "Refactor Code",
+      action: () => handleQuickAction("refactor")
+    };
+  }
+
+  // 7. Live Preview
+  if (lower.includes("live preview") || lower.includes("preview app") || lower.includes("run preview") || lower.includes("open preview") || lower.includes("launch preview")) {
+    return {
+      type: "preview",
+      label: "Open Live Preview",
+      action: () => openLivePreview()
+    };
+  }
+
+  // 8. Starter Templates
+  if (lower.includes("starter template") || lower.includes("templates") || lower.includes("new project template") || lower.includes("load template")) {
+    return {
+      type: "templates",
+      label: "Open Templates Gallery",
+      action: () => openTemplatesModal()
+    };
+  }
+
+  // 9. Open Editor
+  if (lower.includes("open editor") || lower.includes("edit code") || lower.includes("code editor")) {
+    return {
+      type: "editor",
+      label: "Open Mobile Editor",
+      action: () => openEditorWithCurrentFile()
+    };
+  }
+
+  // 10. Clear Chat
+  if (lower.includes("clear chat") || lower.includes("reset chat") || lower.includes("clear conversation")) {
+    return {
+      type: "clear",
+      label: "Clear Conversation",
+      action: () => {
+        chatHistory = [];
+        chatMessages.innerHTML = `
+          <div class="welcome-card">
+            <div class="welcome-icon">✦</div>
+            <h2>Antigravity Mobile IDE</h2>
+            <p>Chat cleared. Ready for your next coding instruction or voice command.</p>
+          </div>
+        `;
+        speakText("Conversation cleared.");
+      }
+    };
+  }
+
+  return null;
+}
+
+function openVoiceHud() {
+  voiceHud.classList.remove("hidden");
+  voiceTranscriptDisplay.textContent = "Listening... Speak a coding instruction or command";
+  voiceCmdBadge.classList.add("hidden");
+  currentVoiceTranscript = "";
+  detectedVoiceCommand = null;
+}
+
+function closeVoiceHud() {
+  voiceHud.classList.add("hidden");
+  if (isRecording && speechRecognizer) {
+    try { speechRecognizer.stop(); } catch (e) {}
+  }
+}
+
 function setupVoice() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
@@ -1718,32 +1966,77 @@ function setupVoice() {
   speechRecognizer.onstart = () => {
     isRecording = true;
     btnVoice.classList.add("recording");
+    triggerHaptic("short");
+    openVoiceHud();
   };
 
   speechRecognizer.onresult = (event) => {
     const transcript = Array.from(event.results)
       .map((r) => r[0].transcript)
       .join("");
+    currentVoiceTranscript = transcript;
+    voiceTranscriptDisplay.textContent = transcript || "Listening...";
     promptInput.value = transcript;
+
+    detectedVoiceCommand = classifyVoiceCommand(transcript);
+    if (detectedVoiceCommand) {
+      voiceCmdBadge.classList.remove("hidden");
+      voiceCmdName.textContent = detectedVoiceCommand.label;
+    } else {
+      voiceCmdBadge.classList.add("hidden");
+    }
   };
 
-  speechRecognizer.onerror = () => {
+  speechRecognizer.onerror = (err) => {
+    console.warn("Speech recognition error:", err);
     isRecording = false;
     btnVoice.classList.remove("recording");
+    setTimeout(closeVoiceHud, 1200);
   };
 
   speechRecognizer.onend = () => {
     isRecording = false;
     btnVoice.classList.remove("recording");
+
+    if (detectedVoiceCommand) {
+      triggerHaptic("success");
+      setTimeout(() => {
+        closeVoiceHud();
+        detectedVoiceCommand.action();
+      }, 500);
+    } else if (currentVoiceTranscript.trim().length > 0) {
+      triggerHaptic("short");
+    } else {
+      setTimeout(closeVoiceHud, 400);
+    }
   };
 
   btnVoice.addEventListener("click", () => {
     if (isRecording) {
       speechRecognizer.stop();
     } else {
-      speechRecognizer.start();
+      try {
+        speechRecognizer.start();
+      } catch (e) {
+        setTimeout(() => speechRecognizer.start(), 200);
+      }
     }
   });
+
+  if (btnVoiceCancel) btnVoiceCancel.addEventListener("click", closeVoiceHud);
+  if (btnVoiceHudClose) btnVoiceHudClose.addEventListener("click", closeVoiceHud);
+  if (voiceHudBackdrop) voiceHudBackdrop.addEventListener("click", closeVoiceHud);
+
+  if (btnVoiceSubmit) {
+    btnVoiceSubmit.addEventListener("click", () => {
+      closeVoiceHud();
+      if (detectedVoiceCommand) {
+        detectedVoiceCommand.action();
+      } else if (currentVoiceTranscript.trim()) {
+        sendPrompt(currentVoiceTranscript);
+      }
+    });
+  }
 }
 
 // ==========================================
@@ -1757,6 +2050,9 @@ promptInput.addEventListener("keydown", (e) => {
     sendPrompt();
   }
 });
+
+if (btnTts) btnTts.addEventListener("click", toggleTts);
+if (btnPip) btnPip.addEventListener("click", togglePiP);
 
 btnSettings.addEventListener("click", () => {
   initSettings();
@@ -1776,6 +2072,7 @@ promptInput.addEventListener("input", () => {
 window.addEventListener("DOMContentLoaded", () => {
   setupMarkdownParser();
   initSettings();
+  initTts();
   Workspace.init();
   setupVoice();
 
