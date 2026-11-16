@@ -7,8 +7,16 @@ import os
 import sys
 import json
 import ssl
+import socket
 import urllib.request
 import urllib.error
+
+# Force IPv4 resolution to eliminate mobile hotspot IPv6 connection timeouts
+_orig_getaddrinfo = socket.getaddrinfo
+def _ipv4_only_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    return _orig_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
+socket.getaddrinfo = _ipv4_only_getaddrinfo
+
 from typing import Dict, Any, List, Optional, Generator
 
 from backend.tools import ToolRegistry
@@ -116,7 +124,7 @@ class PureGeminiAgent:
     def __init__(self, workspace_dir: str, api_key: Optional[str] = None, model_name: str = "gemini-3.8-flash"):
         self.workspace_dir = workspace_dir
         self.tools = ToolRegistry(workspace_dir)
-        self.api_key = api_key or os.getenv("GEMINI_API_KEY", "")
+        self.api_key = (api_key or os.getenv("GEMINI_API_KEY", "")).strip()
         self.model_name = model_name
         self.history: List[Dict[str, Any]] = []
 
@@ -141,7 +149,7 @@ class PureGeminiAgent:
             return {"status": "error", "message": str(e)}
 
     def _call_gemini_api(self, contents: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Send raw HTTP POST to Gemini REST endpoint."""
+        """Send raw HTTP POST to Gemini REST endpoint with fast 15-second timeout."""
         url = f"{GEMINI_API_BASE}/{self.model_name}:generateContent?key={self.api_key}"
         
         payload = {
@@ -158,24 +166,26 @@ class PureGeminiAgent:
         }
 
         data_bytes = json.dumps(payload).encode("utf-8")
+        headers = {
+            "Content-Type": "application/json",
+            "User-Agent": "AntigravityMobile/1.0"
+        }
+
         req = urllib.request.Request(
             url,
             data=data_bytes,
-            headers={
-                "Content-Type": "application/json",
-                "User-Agent": "AntigravityMobile/1.0"
-            },
+            headers=headers,
             method="POST"
         )
 
         ctx = ssl.create_default_context()
         try:
-            with urllib.request.urlopen(req, timeout=60, context=ctx) as resp:
+            with urllib.request.urlopen(req, timeout=15, context=ctx) as resp:
                 body = resp.read().decode("utf-8")
                 return json.loads(body)
         except ssl.SSLError:
             unverified_ctx = ssl._create_unverified_context()
-            with urllib.request.urlopen(req, timeout=60, context=unverified_ctx) as resp:
+            with urllib.request.urlopen(req, timeout=15, context=unverified_ctx) as resp:
                 body = resp.read().decode("utf-8")
                 return json.loads(body)
 

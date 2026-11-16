@@ -43,7 +43,7 @@ function getApiKey() {
 }
 
 function getSelectedModel() {
-  return localStorage.getItem("antigravity_model") || "gemini-3.8-flash";
+  return localStorage.getItem("antigravity_model") || "gemini-2.5-flash";
 }
 
 function initSettings() {
