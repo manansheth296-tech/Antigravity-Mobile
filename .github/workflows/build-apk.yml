@@ -35,37 +35,37 @@ jobs:
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
       - name: Build Debug APK
-        id: gradle_build
         run: |
           cd android
           gradle assembleDebug --stacktrace --no-daemon 2>&1 | tee ../build.log
-        continue-on-error: true
 
-      - name: Verify Build and Show Logs
+      - name: Locate and Prepare APK
         run: |
-          if [ ! -f android/app/build/outputs/apk/debug/app-debug.apk ]; then
+          echo "Searching for generated APK files..."
+          find . -name "*.apk"
+          APK_PATH=$(find android -name "*.apk" | head -n 1)
+          echo "Found APK at: $APK_PATH"
+          if [ -z "$APK_PATH" ]; then
             echo "==================== BUILD FAILURE LOG ===================="
-            tail -n 80 build.log
+            tail -n 100 build.log
             echo "==========================================================="
             exit 1
           fi
-          echo "Build succeeded!"
-
-      - name: Prepare APK Output
-        run: |
-          cp android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/AntigravityMobile.apk
+          mkdir -p apk_output
+          cp "$APK_PATH" apk_output/AntigravityMobile.apk
+          echo "APK successfully staged at apk_output/AntigravityMobile.apk"
 
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: AntigravityMobile-APK
-          path: android/app/build/outputs/apk/debug/AntigravityMobile.apk
+          path: apk_output/AntigravityMobile.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         with:
-          files: android/app/build/outputs/apk/debug/AntigravityMobile.apk
+          files: apk_output/AntigravityMobile.apk
           tag_name: v1.0.0
           name: "Antigravity Mobile v1.0.0"
           body: "Direct native APK install for Antigravity Mobile on Android."
