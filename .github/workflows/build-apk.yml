@@ -37,23 +37,38 @@ jobs:
       - name: Build Debug APK
         run: |
           cd android
-          gradle assembleDebug --stacktrace --no-daemon 2>&1 | tee ../build.log
+          gradle assembleDebug --stacktrace --no-daemon > ../build.log 2>&1 || true
 
-      - name: Locate and Prepare APK
+      - name: Extract Diagnostics & Check APK
         run: |
-          echo "Searching for generated APK files..."
-          find . -name "*.apk"
+          echo "=== FULL BUILD LOG ==="
+          cat build.log
+          echo "======================"
+          
+          # Scan build.log for errors and output as GitHub Action annotations
+          python3 -c "
+          with open('build.log') as f:
+              for line in f:
+                  l = line.strip()
+                  if any(k in l for k in ['FAILED', 'FAILURE', 'error:', 'Caused by:', 'AAPT:']):
+                      print(f'::error::{l}')
+          " || true
+
           APK_PATH=$(find android -name "*.apk" | head -n 1)
-          echo "Found APK at: $APK_PATH"
           if [ -z "$APK_PATH" ]; then
-            echo "==================== BUILD FAILURE LOG ===================="
-            tail -n 100 build.log
-            echo "==========================================================="
+            echo "::error::Gradle assembleDebug did not produce any APK."
             exit 1
           fi
+          echo "Found APK at: $APK_PATH"
           mkdir -p apk_output
           cp "$APK_PATH" apk_output/AntigravityMobile.apk
-          echo "APK successfully staged at apk_output/AntigravityMobile.apk"
+
+      - name: Upload Build Log on Failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
 
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
